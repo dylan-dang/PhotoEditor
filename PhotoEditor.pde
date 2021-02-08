@@ -11,10 +11,8 @@ void setup() {
   com.formdev.flatlaf.FlatDarkLaf.install();
 
   //hook into Processing frame and setup
-  //fullScreen();
-  //surface.setSize(800, 600);
+  setSize(800, 600);
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
-  //frame.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   frame.setResizable(true);
   frame.setTitle("Photo Editor");
