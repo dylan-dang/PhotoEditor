@@ -11,7 +11,7 @@ void setup() {
   com.formdev.flatlaf.FlatDarkLaf.install();
 
   //hook into Processing frame and setup
-  setSize(800, 600);
+  size(800, 600); //easier than setting frame size and location
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   frame.setResizable(true);
