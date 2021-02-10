@@ -17,7 +17,7 @@ void setup() {
   frame.setResizable(true);
   frame.setTitle("Photo Editor");
 
-  Model m = new Model();
+  Document m = new Document();
   View v = new View(frame);
   Controller c = new Controller(m, v);
 

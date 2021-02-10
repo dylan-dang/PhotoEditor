@@ -15,12 +15,35 @@ public class View extends JPanel {
     });
   }
 
+  class sampleAction extends AbstractAction {
+    public sampleAction(String text, ImageIcon icon,
+                      String desc, Integer mnemonic) {
+      super(text, icon);
+      putValue(SHORT_DESCRIPTION, desc);
+      putValue(MNEMONIC_KEY, mnemonic);
+    }
+    public void actionPerformed(ActionEvent e) {
+      println(e);
+    }
+  }
+
   private View initView() {
     frame.setJMenuBar(menubar = new MenuBar());
 
     setLayout(new MultiBorderLayout());
-
-
+    JToolBar[] idk = new JToolBar[10];
+    for(int i = 0; i < idk.length; i++) {
+      DnDTabbedPane bruh = new DnDTabbedPane();
+      JTree tree = new JTree();
+      bruh.addTab("test", tree);
+      bruh.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+      idk[i] = new JToolBar(1);
+      tree.setMaximumSize(new Dimension(500, 10000000));
+      idk[i].setBackground(new Color(51, 51 , 51));
+      idk[i].add(bruh);
+      //idk[i].add(new sampleAction("idk", null, null, null));
+      add(idk[i], BorderLayout.WEST);
+    }
 
     return this;
   }

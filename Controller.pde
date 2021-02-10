@@ -1,8 +1,8 @@
 public class Controller {
-  private Model model;
+  private Document model;
   private View view;
 
-  Controller(Model model, View view) {
+  Controller(Document model, View view) {
     this.model = model;
     this.view = view;
     SwingUtilities.invokeLater(new MenuBarListener());
