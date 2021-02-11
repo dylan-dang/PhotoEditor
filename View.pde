@@ -29,8 +29,16 @@ public class View extends JPanel {
 
   private View initView() {
     frame.setJMenuBar(menubar = new MenuBar());
-
     setLayout(new MultiBorderLayout());
+
+    DnDTabbedPane bruh = new DnDTabbedPane();
+    JTree tree = new JTree();
+    bruh.addTab("test", tree);
+    ResizablePanel properties = new ResizablePanel();
+    properties.add(bruh);
+    add(properties, BorderLayout.EAST);
+
+    /*
     JToolBar[] idk = new JToolBar[10];
     for(int i = 0; i < idk.length; i++) {
       DnDTabbedPane bruh = new DnDTabbedPane();
@@ -44,6 +52,7 @@ public class View extends JPanel {
       //idk[i].add(new sampleAction("idk", null, null, null));
       add(idk[i], BorderLayout.WEST);
     }
+    */
 
     return this;
   }

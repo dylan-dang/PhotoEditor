@@ -12,6 +12,33 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import javax.swing.*;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+public class ResizablePanel extends JToolBar {
+
+  public ResizablePanel() {
+		setOrientation(1);
+    setLayout(new BorderLayout());
+    JPanel resize = new JPanel();
+    resize.setPreferredSize(new Dimension(10, 0));
+		resize.setBackground(Color.RED);
+    resize.addMouseMotionListener(new MouseAdapter() {
+      public void mouseDragged(MouseEvent e) {
+      	Dimension preferredSize = ResizablePanel.this.getPreferredSize();
+        ResizablePanel.this.setPreferredSize(new Dimension(preferredSize.width - e.getX(), preferredSize.height));
+        ResizablePanel.this.revalidate();
+      }
+    });
+    add(resize, BorderLayout.WEST);
+		setBorderPainted(false);
+  }
+  void add(JComponent body) {
+    super.add(body, BorderLayout.CENTER);
+  };
+}
+
+
 public class DnDTabbedPane extends JTabbedPane {
 	private final int LINEWIDTH = 3;
 	private final String NAME = "TabTransferData";
