@@ -8,7 +8,7 @@ JFrame frame;
 
 void setup() {
   //styling
-  com.formdev.flatlaf.FlatDarkLaf.install();
+  //com.formdev.flatlaf.FlatDarkLaf.install();
 
   //hook into Processing frame and setup
   size(800, 600); //easier than setting frame size and location

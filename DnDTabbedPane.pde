@@ -14,13 +14,21 @@ import javax.swing.*;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.plaf.basic.BasicToolBarUI;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 
 public class ResizablePanel extends JToolBar {
+  BasicToolBarUI ui;
+  JPanel resize = new JPanel();
+  private final int resizeBorderWidth = 10;
 
   public ResizablePanel() {
-		setOrientation(1);
+    ui = (BasicToolBarUI) getUI();
     setLayout(new BorderLayout());
-    JPanel resize = new JPanel();
+    addAncestorListener(new FloatListener());
+		setOrientation(1);
+
     resize.setPreferredSize(new Dimension(10, 0));
 		resize.setBackground(Color.RED);
     resize.addMouseMotionListener(new MouseAdapter() {
@@ -30,9 +38,31 @@ public class ResizablePanel extends JToolBar {
         ResizablePanel.this.revalidate();
       }
     });
-    add(resize, BorderLayout.WEST);
-		setBorderPainted(false);
+		//setBorderPainted(false);
   }
+  class FloatListener implements AncestorListener {
+    @Override
+    public void ancestorAdded(AncestorEvent e) {
+      if (ui.isFloating()) {
+        remove(resize);
+      } else {
+        resize.setPreferredSize(getOrientation() == 0
+          ? new Dimension(0, resizeBorderWidth)
+          : new Dimension(resizeBorderWidth, 0)
+        );
+        add(resize, BorderLayout.WEST);
+      }
+      revalidate();
+    }
+
+    @Override
+    public void ancestorRemoved(AncestorEvent e) {
+      println("removed");
+    }
+
+    @Override public void ancestorMoved(AncestorEvent e) {}
+  }
+
   void add(JComponent body) {
     super.add(body, BorderLayout.CENTER);
   };

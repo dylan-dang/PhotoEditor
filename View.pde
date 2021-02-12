@@ -1,5 +1,6 @@
 import java.util.Vector;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 
 public class View extends JPanel {
   private JFrame frame;
@@ -31,28 +32,28 @@ public class View extends JPanel {
     frame.setJMenuBar(menubar = new MenuBar());
     setLayout(new MultiBorderLayout());
 
-    DnDTabbedPane bruh = new DnDTabbedPane();
+    /*DnDTabbedPane bruh = new DnDTabbedPane();
     JTree tree = new JTree();
     bruh.addTab("test", tree);
     ResizablePanel properties = new ResizablePanel();
     properties.add(bruh);
     add(properties, BorderLayout.EAST);
+    */
 
-    /*
-    JToolBar[] idk = new JToolBar[10];
+    ResizablePanel[] idk = new ResizablePanel[10];
     for(int i = 0; i < idk.length; i++) {
       DnDTabbedPane bruh = new DnDTabbedPane();
       JTree tree = new JTree();
       bruh.addTab("test", tree);
       bruh.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-      idk[i] = new JToolBar(1);
+      idk[i] = new ResizablePanel();
       tree.setMaximumSize(new Dimension(500, 10000000));
       idk[i].setBackground(new Color(51, 51 , 51));
       idk[i].add(bruh);
       //idk[i].add(new sampleAction("idk", null, null, null));
-      add(idk[i], BorderLayout.WEST);
+      add(idk[i], BorderLayout.EAST);
     }
-    */
+
 
     return this;
   }
@@ -98,13 +99,13 @@ public class View extends JPanel {
 }
 
 class MultiBorderLayout extends BorderLayout {
-    Vector northList = new Vector();
-    Vector southList = new Vector();
-    Vector westList = new Vector();
-    Vector eastList = new Vector();
-    Vector centerList = new Vector();
+
+    private final String[] sideNames = {"North", "South", "West", "East", "Center"};
+    HashMap<String, Vector> sides = new HashMap<String, Vector>();
+
     public MultiBorderLayout() {
       super();
+      for(String sideName: sideNames) sides.put(sideName, new Vector());
     }
 
     /**
@@ -115,6 +116,7 @@ class MultiBorderLayout extends BorderLayout {
      */
     public MultiBorderLayout(int hgap, int vgap) {
         super(hgap, vgap);
+        for(String sideName: sideNames) sides.put(sideName, new Vector());
     }
 
     /**
@@ -135,32 +137,13 @@ class MultiBorderLayout extends BorderLayout {
     //the method is deprecated but it's necessary to override it because current class extends
     //BorderLayout to provide multiple components (toolbars)
     public void addLayoutComponent(String name, Component comp) {
-
         synchronized (comp.getTreeLock()) {
-            /*
-             *  Special case:  treat null the same as "Center".
-             */
-            if (name == null) {
-                name = "Center";
+            name = name == null ? "Center": name;
+            try {
+              sides.get(name).add(comp);
+            } catch (Exception e) {
+              throw new IllegalArgumentException("cannot add to layout: unknown constraint: " + name);
             }
-
-            /*
-             *  Assign the component to one of the known regions of the layout.
-             */
-            if ("Center".equals(name)) {
-                centerList.add(comp);
-            } else if ("North".equals(name)) {
-                northList.insertElementAt(comp, 0);
-            } else if ("South".equals(name)) {
-                southList.add(comp);
-            } else if ("East".equals(name)) {
-                eastList.add(comp);
-            } else if ("West".equals(name)) {
-                westList.add(comp);
-            } else {
-                throw new IllegalArgumentException("cannot add to layout: unknown constraint: " + name);
-            }
-
         }
     }
 
@@ -173,12 +156,7 @@ class MultiBorderLayout extends BorderLayout {
      */
     public void removeLayoutComponent(Component comp) {
         synchronized (comp.getTreeLock()) {
-
-            southList.remove(comp);
-            northList.remove(comp);
-            centerList.remove(comp);
-            westList.remove(comp);
-            eastList.remove(comp);
+          for(String sideName: sideNames) sides.get(sideName).remove(comp);
         }
     }
 
@@ -193,78 +171,47 @@ class MultiBorderLayout extends BorderLayout {
      * @return        the minimum dimensions needed to lay out the subcomponents
      *      of the specified container.
      */
-    public Dimension minimumLayoutSize(Container target) {
-        synchronized (target.getTreeLock()) {
-            Dimension dim = new Dimension(0, 0);
 
-            Component c;
+    private Dimension getLayoutSize(Container target, boolean isPreferred) {
+      synchronized (target.getTreeLock()) {
 
-            if (eastList.size() > 0) {
-                for (int i = 0; i < eastList.size(); i++) {
-                    c = (Component) eastList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getMinimumSize();
-                    dim.width += d.width + this.getHgap();
-                    dim.height = Math.max(d.height, dim.height);
-                }
+          Dimension dim = new Dimension(0, 0);
+          Component c;
+
+          for (String sideName: sideNames) {
+            for (int i = 0; i < sides.get(sideName).size(); i++) {
+              c = (Component) sides.get(sideName).get(i);
+              if (!c.isVisible()) continue;
+              Dimension d = isPreferred? c.getPreferredSize() : c.getMinimumSize();
+              switch (sideName) {
+                case "North":
+                case "South":
+                  dim.width = Math.max(d.width, dim.width);
+                  dim.height += d.height + this.getVgap();
+                  break;
+                case "East":
+                case "West":
+                  dim.width += d.width + this.getHgap();
+                  dim.height = Math.max(d.height, dim.height);
+                  break;
+                case "Center":
+                  dim.width += d.width;
+                  dim.height = Math.max(d.height, dim.height);
+                  break;
+              }
             }
-            if (westList.size() > 0) {
-                for (int i = 0; i < westList.size(); i++) {
-                    c = (Component) westList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getMinimumSize();
-                    dim.width += d.width + this.getHgap();
-                    dim.height = Math.max(d.height, dim.height);
-                }
-            }
-            if (centerList.size() > 0) {
-                for (int i = 0; i < centerList.size(); i++) {
-                    c = (Component) centerList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getMinimumSize();
-                    dim.width += d.width;
-                    dim.height = Math.max(d.height, dim.height);
-                }
-            }
-            if (northList.size() > 0) {
-                for (int i = 0; i < northList.size(); i++) {
-                    c = (Component) northList.get(i);
-                    if (!c.isVisible()) {
+          }
 
-                        continue;
-                    }
-                    Dimension d = c.getMinimumSize();
-                    dim.width = Math.max(d.width, dim.width);
-                    dim.height += d.height + this.getVgap();
-                }
-            }
-            if (southList.size() > 0) {
-                for (int i = 0; i < southList.size(); i++) {
-                    c = (Component) southList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getMinimumSize();
-                    dim.width = Math.max(d.width, dim.width);
-                    dim.height += d.height + this.getVgap();
-                }
-            }
+          Insets insets = target.getInsets();
+          dim.width += insets.left + insets.right;
+          dim.height += insets.top + insets.bottom;
 
-            Insets insets = target.getInsets();
-            dim.width += insets.left + insets.right;
-            dim.height += insets.top + insets.bottom;
-
-            return dim;
-        }
-
+          return dim;
+      }
     }
-
+    public Dimension minimumLayoutSize(Container target) {
+      return getLayoutSize(target, false);
+    }
     /**
      * Determines the preferred size of the <code>target</code> container using
      * this layout manager, based on the components in the container. <p>
@@ -277,77 +224,7 @@ class MultiBorderLayout extends BorderLayout {
      *      the specified container.
      */
     public Dimension prefferedLayoutSize(Container target) {
-        synchronized (target.getTreeLock()) {
-            Dimension dim = new Dimension(0, 0);
-
-            Component c;
-
-            if (eastList.size() > 0) {
-                for (int i = 0; i < eastList.size(); i++) {
-                    c = (Component) eastList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    dim.width += d.width + this.getHgap();
-                    dim.height = Math.max(d.height, dim.height);
-                }
-            }
-
-            if (westList.size() > 0) {
-                for (int i = 0; i < westList.size(); i++) {
-                    c = (Component) westList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    dim.width += d.width + this.getHgap();
-                    dim.height = Math.max(d.height, dim.height);
-                }
-            }
-
-            if (centerList.size() > 0) {
-                for (int i = 0; i < centerList.size(); i++) {
-                    c = (Component) centerList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    dim.width += d.width;
-                    dim.height = Math.max(d.height, dim.height);
-                }
-            }
-
-            if (northList.size() > 0) {
-                for (int i = 0; i < northList.size(); i++) {
-                    c = (Component) northList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    dim.width = Math.max(d.width, dim.width);
-                    dim.height += d.height + this.getVgap();
-                }
-            }
-
-            if (southList.size() > 0) {
-                for (int i = 0; i < southList.size(); i++) {
-                    c = (Component) southList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    dim.width = Math.max(d.width, dim.width);
-                    dim.height += d.height + this.getVgap();
-                }
-            }
-
-            Insets insets = target.getInsets();
-            dim.width += insets.left + insets.right;
-            dim.height += insets.top + insets.bottom;
-
-            return dim;
-        }
+      return getLayoutSize(target, true);
     }
 
     /**
@@ -367,77 +244,48 @@ class MultiBorderLayout extends BorderLayout {
      * @param target  the container in which to do the layout.
      */
     public void layoutContainer(Container target) {
-        synchronized (target.getTreeLock()) {
-            Insets insets = target.getInsets();
-            int top = insets.top;
-            int bottom = target.getHeight() - insets.bottom;
-            int left = insets.left;
-            int right = target.getWidth() - insets.right;
+      synchronized (target.getTreeLock()) {
 
-            Component c;
+        Insets insets = target.getInsets();
+        int top = insets.top;
+        int bottom = target.getHeight() - insets.bottom;
+        int left = insets.left;
+        int right = target.getWidth() - insets.right;
 
-            if (northList.size() > 0) {
-                for (int i = 0; i < northList.size(); i++) {
-                    c = (Component) northList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    c.setSize(right - left, d.height);
-                    c.setBounds(left, top, right - left, c.getHeight());
-                    top += d.height;
-                }
+        Component c;
+
+          for (String sideName: sideNames) {
+            for (int i = 0; i < sides.get(sideName).size(); i++) {
+              c = (Component) sides.get(sideName).get(i);
+              if (!c.isVisible()) continue;
+              Dimension d = c.getPreferredSize();
+              switch (sideName) {
+                case "North":
+                  c.setSize(right - left, d.height);
+                  c.setBounds(left, top, right - left, c.getHeight());
+                  top += d.height;
+                  break;
+                case "South":
+                  c.setSize(right - left, d.height);
+                  c.setBounds(left, bottom - d.height, right - left, c.getHeight());
+                  bottom -= d.height;
+                  break;
+                case "East":
+                  c.setSize(d.width, bottom - top);
+                  c.setBounds(right - d.width, top, c.getWidth(), bottom - top);
+                  right -= d.width;
+                  break;
+                case "West":
+                  c.setSize(d.width, bottom - top);
+                  c.setBounds(left, top, c.getWidth(), bottom - top);
+                  left += d.width;
+                  break;
+                case "Center":
+                  c.setBounds(left, top, right - left, bottom - top);
+                  break;
+              }
             }
-
-            if (southList.size() > 0) {
-                for (int i = 0; i < southList.size(); i++) {
-                    c = (Component) southList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    c.setSize(right - left, d.height);
-                    c.setBounds(left, bottom - d.height, right - left, c.getHeight());
-                    bottom -= d.height;
-                }
-            }
-
-            if (eastList.size() > 0) {
-                for (int i = 0; i < eastList.size(); i++) {
-                    c = (Component) eastList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    c.setSize(d.width, bottom - top);
-                    c.setBounds(right - d.width, top, c.getWidth(), bottom - top);
-                    right -= d.width;
-                }
-            }
-
-            if (westList.size() > 0) {
-                for (int i = 0; i < westList.size(); i++) {
-                    c = (Component) westList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    Dimension d = c.getPreferredSize();
-                    c.setSize(d.width, bottom - top);
-                    c.setBounds(left, top, c.getWidth(), bottom - top);
-                    left += d.width;
-                }
-            }
-
-            if (centerList.size() > 0) {
-                for (int i = 0; i < centerList.size(); i++) {
-                    c = (Component) centerList.get(i);
-                    if (!c.isVisible()) {
-                        continue;
-                    }
-                    c.setBounds(left, top, right - left, bottom - top);
-                }
-            }
-
-        }
+          }
+      }
     }
 }
