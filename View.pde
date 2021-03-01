@@ -74,7 +74,7 @@ public class View extends JPanel {
   private class ToolBar extends JToolBar {
     ToolBar() {
       for(int i = 0; i < 20; i++)
-      add(new JToggleButton("bruh"));
+      add(new JToggleButton("tool"));
       setOrientation(JToolBar.VERTICAL);
     }
   }
@@ -87,8 +87,10 @@ public class View extends JPanel {
     return menubar;
   }
 
-  public void addDocumentView(Document doc) {
-    imageTabs.addTab(doc.getName(), new DocumentView(doc));
+  public DocumentView addDocumentView(Document doc) {
+    DocumentView docview = new DocumentView(doc);
+    imageTabs.addTab(doc.getName(), docview);
+    return docview;
   }
 }
 
@@ -97,6 +99,8 @@ public class DocumentView extends JPanel {
   private Document document;
   private JPanel infoBar;
   private double scale;
+  public ImageIcon imageIcon;
+  public JLabel wrapper;
   float zoomFactor;
   DocumentView(Document document) {
     this.document = document;
@@ -116,7 +120,10 @@ public class DocumentView extends JPanel {
     centerPanel.setLayout(new GridBagLayout());
     centerPanel.add(new ImagePanel());
 
-    //add(new ZoomScrollPanel(), BorderLayout.CENTER);
+    imageIcon = new ImageIcon(document.getEditView());
+    wrapper = new JLabel(imageIcon);
+    JScrollPane scrollpane = new JScrollPane(wrapper);
+    add(scrollpane, BorderLayout.CENTER);
   }
   private class ImagePanel extends JPanel {
       private final BufferedImage image = document.getEditView();
@@ -128,5 +135,9 @@ public class DocumentView extends JPanel {
           g2.drawImage(image, 0, 0, null);
           g2.dispose();
       }
+  }
+  public void updateImage() {
+    imageIcon.setImage(document.getEditView());
+    wrapper.repaint();
   }
 }

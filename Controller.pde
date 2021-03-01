@@ -8,6 +8,7 @@ public class Controller {
   private ArrayList<Document> docs;
   private View view;
   Controller controller = this;
+  DocumentView docview;
 
   Controller(View view) {
     this.view = view;
@@ -17,7 +18,7 @@ public class Controller {
 
   void addDocument(Document doc) {
     docs.add(doc);
-    view.addDocumentView(doc);
+    docview = view.addDocumentView(doc);
   }
 
   private class MenuBarController {
@@ -27,12 +28,13 @@ public class Controller {
     public void addAllMenuBarItems() {
       addFileMenuItems();
       addEditMenuItems();
+      addFilterMenuItems();
     }
 
     private void addFileMenuItems() {
       JMenu fileMenu = view.getMenuBar().getFileMenu();
       fileMenu.add(new NewFileAction(controller));
-      fileMenu.add(new OpenFileAction(view));
+      fileMenu.add(new OpenFileAction(controller, view));
       fileMenu.addSeparator();
       fileMenu.add(new SaveAction());
       fileMenu.add(new SaveAsAction());
@@ -58,15 +60,32 @@ public class Controller {
       JMenu imageMenu = view.getMenuBar().getImageMenu();
     }
 
-    private void addLayerItems() {
+    private void addLayerMenuItems() {
       JMenu layerMenu = view.getMenuBar().getLayerMenu();
     }
 
-    private void addFilterItems() {
+    private void addFilterMenuItems() {
       JMenu filterMenu = view.getMenuBar().getFilterMenu();
+      filterMenu.add(new TestFilter());
     }
 
     //EditMenu Actions
+
+    public class TestFilter extends AbstractAction {
+      public TestFilter() {
+        super("test filter");
+      }
+      @Override
+      void actionPerformed(ActionEvent e) {
+        if (docs.isEmpty()) return;
+        byte[] pixels = ((DataBufferByte) docs.get(0).getEditView().getRaster().getDataBuffer()).getData();
+        for (int i = 0; i < pixels.length; i += 2) {
+          pixels[i] = pixels[pixels.length - i - 1];
+        }
+        println("done");
+        docview.updateImage();
+      }
+    }
   }
 
 }

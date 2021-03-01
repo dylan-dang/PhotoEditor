@@ -16,6 +16,16 @@ public class Document {
     this.width = image.getHeight();
     layers.add(new Layer(image));
   }
+  Document(File file) {
+    try {
+      BufferedImage image = ImageIO.read(file);
+      layers.add(new Layer(image));
+      this.height = image.getWidth();
+      this.width = image.getHeight();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
   String getName() {
     return name;
   }
@@ -32,11 +42,7 @@ public class Document {
     //TODO blendmodes
 
     Layer() {
-      try {
-          image = ImageIO.read(new File("C:\\Users\\user1\\Desktop\\image2.png"));
-      } catch (IOException e) {
-          e.printStackTrace();
-      }
+      this.image = new BufferedImage(800, 600, 1);
     }
 
     Layer(BufferedImage image) {

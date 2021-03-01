@@ -22,13 +22,15 @@ public class NewFileAction extends MenuBarAction {
 public class OpenFileAction extends MenuBarAction {
   File file;
   View view;
+  Controller controller;
 
-  public OpenFileAction(View view) {
+  public OpenFileAction(Controller controller, View view) {
     super("Open...", "ctrl O");
     this.view = view;
+    this.controller = controller;
   }
-  public OpenFileAction() {
-    this(null);
+  public OpenFileAction(Controller controller) {
+    this(controller, null);
   }
 
   @Override
@@ -53,8 +55,8 @@ public class OpenFileAction extends MenuBarAction {
       throw new RuntimeException(ex);
     } finally {
       view.getFrame().setEnabled(true);
-      println(file);
-      //TODO import file
+      //println(file);
+      controller.addDocument(new Document(file));
     }
   }
 }
