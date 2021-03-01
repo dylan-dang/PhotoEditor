@@ -18,56 +18,6 @@ import javax.swing.plaf.basic.BasicToolBarUI;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-public class ResizablePanel extends JToolBar {
-  BasicToolBarUI ui;
-  JPanel resize = new JPanel();
-  private final int resizeBorderWidth = 10;
-
-  public ResizablePanel() {
-    ui = (BasicToolBarUI) getUI();
-    setLayout(new BorderLayout());
-    addAncestorListener(new FloatListener());
-		setOrientation(1);
-
-    resize.setPreferredSize(new Dimension(10, 0));
-		resize.setBackground(Color.RED);
-    resize.addMouseMotionListener(new MouseAdapter() {
-      public void mouseDragged(MouseEvent e) {
-      	Dimension preferredSize = ResizablePanel.this.getPreferredSize();
-        ResizablePanel.this.setPreferredSize(new Dimension(preferredSize.width - e.getX(), preferredSize.height));
-        ResizablePanel.this.revalidate();
-      }
-    });
-		//setBorderPainted(false);
-  }
-  class FloatListener implements AncestorListener {
-    @Override
-    public void ancestorAdded(AncestorEvent e) {
-      if (ui.isFloating()) {
-        remove(resize);
-      } else {
-        resize.setPreferredSize(getOrientation() == 0
-          ? new Dimension(0, resizeBorderWidth)
-          : new Dimension(resizeBorderWidth, 0)
-        );
-        add(resize, BorderLayout.WEST);
-      }
-      revalidate();
-    }
-
-    @Override
-    public void ancestorRemoved(AncestorEvent e) {
-      println("removed");
-    }
-
-    @Override public void ancestorMoved(AncestorEvent e) {}
-  }
-
-  void add(JComponent body) {
-    super.add(body, BorderLayout.CENTER);
-  };
-}
-
 
 public class DnDTabbedPane extends JTabbedPane {
 	private final int LINEWIDTH = 3;
@@ -112,6 +62,7 @@ public class DnDTabbedPane extends JTabbedPane {
 			}
 
 			public void dragDropEnd(DragSourceDropEvent e) {
+        println("bruh");
 				m_isDrawRect = true;
 				m_lineRect.setRect(0, 0, 0, 0);
 				// m_dragTabIndex = -1;
@@ -120,6 +71,28 @@ public class DnDTabbedPane extends JTabbedPane {
 					s_glassPane.setVisible(false);
 					s_glassPane.setImage(null);
 				}
+
+        if(!e.getDropSuccess()){
+          println("bruh");
+            // MenuLight class Extends JFrame and Included 1 component JTabbedPane called superPane
+            DnDTabbedPane windowTabbedPane = new DnDTabbedPane();
+            windowTabbedPane.add(new JTree());
+            JFrame f = new JFrame();
+            //f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            //f.setUndecorated(true);
+            f.setSize(new Dimension(200, 200));
+            f.setContentPane(windowTabbedPane);
+            f.setVisible(true);
+
+            // after create Frame, transfer the tab to other jtabbedpane
+            //windowTabbedPane.convertTab(getTabTransferData(e), getTargetTabIndex(e.getLocation()));
+        }
+
+        // if current JTabbedPane Tab is empty dispose it.
+        if(getTabCount() < 1){
+          println(getParent() instanceof JLayeredPane);
+        }
+
 			}
 
 			public void dropActionChanged(DragSourceDragEvent e) {
