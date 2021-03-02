@@ -3,7 +3,7 @@ import java.awt.image.BufferedImage;
 
 public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
-  int height, width;
+  private int height, width;
   private String name = "new image";
 
   Document(int width, int height) {
@@ -16,7 +16,17 @@ public class Document {
     this.width = image.getHeight();
     layers.add(new Layer(image));
   }
-  String getName() {
+  Document(File file) {
+    try {
+      BufferedImage image = ImageIO.read(file);
+      layers.add(new Layer(image));
+      this.height = image.getWidth();
+      this.width = image.getHeight();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  public String getName() {
     return name;
   }
 
@@ -33,9 +43,9 @@ public class Document {
 
     Layer() {
       try {
-          image = ImageIO.read(new File("C:\\Users\\user1\\Desktop\\image2.png"));
+        image = ImageIO.read(new File("C:\\Users\\user1\\Desktop\\image2.png"));
       } catch (IOException e) {
-          e.printStackTrace();
+        e.printStackTrace();
       }
     }
 
