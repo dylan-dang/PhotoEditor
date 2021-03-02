@@ -42,11 +42,7 @@ public class Document {
     //TODO blendmodes
 
     Layer() {
-      try {
-        image = ImageIO.read(new File("C:\\Users\\user1\\Desktop\\image2.png"));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
     }
 
     Layer(BufferedImage image) {

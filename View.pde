@@ -46,8 +46,12 @@ public class View extends JPanel {
 
   private class ToolBar extends JToolBar {
     ToolBar() {
-      for(int i = 0; i < 20; i++)
-        add(new JToggleButton("bruh"));
+      ButtonGroup group = new ButtonGroup();
+      for(String tool: new String[] {"eraser","eyedropper","paint","pencil","select","zoom","crop"}) {
+        JToggleButton button = new JToggleButton(new ImageIcon(sketchPath("resources/tools/" + tool + ".png")));
+        add(button);
+        group.add(button);
+      }
       setOrientation(JToolBar.VERTICAL);
     }
   }
