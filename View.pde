@@ -47,7 +47,10 @@ public class View extends JPanel {
   private class ToolBar extends JToolBar {
     ToolBar() {
       ColorSelector selector = new ColorSelector();
+      selector.setPreferredSize(new Dimension(32, 32));
+      addRigidSpace(8);
       add(selector);
+      addRigidSpace(8);
       ButtonGroup group = new ButtonGroup();
       for(String tool: new File(sketchPath("resources/tools")).list()) {
         if (tool.endsWith(".png")) {
@@ -57,6 +60,7 @@ public class View extends JPanel {
           button.setMaximumSize(size);
           button.setMinimumSize(size);
           add(button);
+          button.setAlignmentX(CENTER_ALIGNMENT);
           group.add(button);
         }
       }
@@ -82,69 +86,53 @@ public class View extends JPanel {
       ));
       setOrientation(JToolBar.VERTICAL);
     }
-    class ColorSelector extends JButton implements MouseListener {
-      private final int MARGIN = 8;
-      private Rectangle primaryArea = new Rectangle(0, MARGIN, 20, 20);
-      private Rectangle secondaryArea = new Rectangle(11, 11 + MARGIN, 20, 20);
-      private Rectangle trCorner = new Rectangle(20, MARGIN, 12, 12);
-      private Rectangle blCorner = new Rectangle(0, 20 + MARGIN, 12, 12);
-      private JColorChooser primary, secondary;
+    private void addRigidSpace(int length) {
+      add(Box.createRigidArea(new Dimension(length, length)));
+    }
+  }
 
-      ColorSelector() {
-        primary = new JColorChooser(Color.black);
-        secondary = new JColorChooser(Color.white);
-        primary.setPreviewPanel(new JPanel());
-        secondary.setPreviewPanel(new JPanel());
+  public JFrame getFrame() {
+    return this.frame;
+  }
 
-        Dimension size = new Dimension(32, 32 + 2*MARGIN);
-        setPreferredSize(size);
-        setMaximumSize(size);
-        setMinimumSize(size);
+  public JMenu getMenu(String menuName) {
+    return menus.get(menuName);
+  }
 
-        addMouseListener(this);
-      }
-      @Override
-      public void paintComponent(Graphics g) {
-        final Color foreground = new Color(0xADADAD);
-        //color squares
-        Graphics2D g2 = (Graphics2D) g;
-        drawColorArea(g2, secondaryArea, secondary.getColor());
-        drawColorArea(g2, primaryArea, primary.getColor());
+  public DocumentView addDocumentView(Document doc) {
+    DocumentView docView =  new DocumentView(doc);
+    imageTabs.addTab(doc.getName(), docView);
+    return docView;
+  }
 
-        g.translate(0, MARGIN);
-        //default
-        g.setColor(foreground);
-        g.fillRect(3, 24, 7, 7);
-        g.setColor(Color.white);
-        g.fillRect(4, 25, 5, 5);
-        g.setColor(foreground);
-        g.fillRect(0, 21, 7, 7);
-        g.setColor(Color.black);
-        g.fillRect(1, 22, 5, 5);
-        //switch arrows
-        g.setColor(foreground);
-        g.fillPolygon(new int[]{24, 21, 24}, new int[]{-1, 2, 5}, 3);
-        g.drawLine(24, 2, 28, 2);
-        g.drawLine(28, 2, 28, 6);
-        g.fillPolygon(new int[]{26, 28, 31}, new int[]{7, 10, 7}, 3);
+  public DocumentView getSelectedDocumentView() {
+    return (DocumentView) imageTabs.getSelectedComponent();
+  }
+}
 
-        g2.dispose();
-      }
-      private void drawColorArea(Graphics2D g, Rectangle area, Color fill) {
-        area = new Rectangle(area);
-        for (Color c: new Color[] {Color.black, Color.white, fill}) {
-          g.setPaint(c);
-          g.fill(area);
-          area.grow(-1, -1);
-        }
-      }
+class ColorSelector extends JPanel {
+  private Rectangle primaryArea = new Rectangle(),
+                    secondaryArea = new Rectangle(),
+                    trCorner = new Rectangle(),
+                    blCorner = new Rectangle();
+  private JColorChooser primary, secondary;
+
+  ColorSelector() {
+    primary = new JColorChooser(Color.black);
+    secondary = new JColorChooser(Color.white);
+    primary.setPreviewPanel(new JPanel());
+    secondary.setPreviewPanel(new JPanel());
+
+    setPreferredSize(new Dimension(32, 32));
+
+    addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         Point mousePos = e.getPoint();
         if (primaryArea.contains(mousePos)) {
-          primary.createDialog(this, "Color Picker (Primary Color)" , true, primary, null, null).setVisible(true);
+          primary.createDialog((ColorSelector)e.getSource(), "Color Picker (Primary Color)" , true, primary, null, null).setVisible(true);
         } else if (secondaryArea.contains(mousePos)) {
-          secondary.createDialog(this, "Color Picker (Secondary Color)" , true, secondary, null, null).setVisible(true);
+          secondary.createDialog((ColorSelector)e.getSource(), "Color Picker (Secondary Color)" , true, secondary, null, null).setVisible(true);
         } else if (blCorner.contains(mousePos)) {
           primary.setColor(Color.black);
           secondary.setColor(Color.white);
@@ -157,27 +145,55 @@ public class View extends JPanel {
         }
         repaint();
       }
-      @Override
-      public void mousePressed(MouseEvent e) {}
-      @Override
-      public void mouseReleased(MouseEvent e) {}
-      @Override
-      public void mouseEntered(MouseEvent e) {}
-      @Override
-      public void mouseExited(MouseEvent e) {}
+    });
+  }
+  @Override
+  public void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    final Color foreground = new Color(0xADADAD);
+    //color squares
+    Graphics2D g2 = (Graphics2D) g;
+    drawColorArea(g2, secondaryArea, secondary.getColor());
+    drawColorArea(g2, primaryArea, primary.getColor());
+
+    g2.scale((double)getPreferredSize().width / 32, (double)getPreferredSize().height / 32);
+    //default
+    g.setColor(foreground);
+    g.fillRect(3, 24, 7, 7);
+    g.setColor(Color.white);
+    g.fillRect(4, 25, 5, 5);
+    g.setColor(foreground);
+    g.fillRect(0, 21, 7, 7);
+    g.setColor(Color.black);
+    g.fillRect(1, 22, 5, 5);
+    //switch arrows
+    g.setColor(foreground);
+    g.fillPolygon(new int[]{24, 21, 24}, new int[]{0, 3, 6}, 3);
+    g.drawLine(24, 3, 28, 3);
+    g.drawLine(28, 3, 28, 7);
+    g.fillPolygon(new int[]{25, 28, 31}, new int[]{7, 10, 7}, 3);
+
+    g2.dispose();
+  }
+  private void drawColorArea(Graphics2D g, Rectangle area, Color fill) {
+    area = new Rectangle(area);
+    for (Color c: new Color[] {Color.black, Color.white, fill}) {
+      g.setPaint(c);
+      g.fill(area);
+      area.grow(-1, -1);
     }
   }
-
-  public JFrame getFrame() {
-    return this.frame;
-  }
-
-  public JMenu getMenu(String menuName) {
-    return menus.get(menuName);
-  }
-
-  public void addDocumentView(Document doc) {
-    imageTabs.addTab(doc.getName(), new DocumentView(doc));
+  @Override
+  void setPreferredSize(Dimension size) {
+    super.setPreferredSize(size);
+    setMaximumSize(size);
+    setMinimumSize(size);
+    double scalex = size.width / 32;
+    double scaley = size.height / 32;
+    primaryArea.setRect(0, 0, 20 * scalex, 20 * scaley);
+    secondaryArea.setRect(11 * scalex, 11 * scaley, 20 * scalex, 20 * scaley);
+    trCorner.setRect(20 * scalex, 0, 12 * scalex, 12 * scaley);
+    blCorner.setRect(0, 20*scaley, 12 * scalex, 12 * scaley);
   }
 }
 
@@ -185,8 +201,8 @@ public class DocumentView extends JPanel {
   private Document document;
   private JPanel infoBar;
   private float scale = 1;
-  private DrawArea canvas;
-  private JPanel centerPanel;
+  private Canvas canvas;
+  private JPanel canvasWrapper;
   //private boolean blocked = false;
   JScrollPane scrollPane = new JScrollPane();
   DocumentView(Document document) {
@@ -203,12 +219,12 @@ public class DocumentView extends JPanel {
     infoBar.add(slider);
     add(infoBar, BorderLayout.SOUTH);
 
-    centerPanel = new JPanel(new GridBagLayout());
-    centerPanel.add(canvas = new DrawArea());
+    canvasWrapper = new JPanel(new GridBagLayout());
+    canvasWrapper.add(canvas = new Canvas());
 
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-    scrollPane.getViewport().add(centerPanel);
+    scrollPane.getViewport().add(canvasWrapper);
     add(scrollPane, BorderLayout.CENTER);
 
     canvas.addMouseWheelListener(new MouseAdapter() {
@@ -224,7 +240,7 @@ public class DocumentView extends JPanel {
       }
     });
   }
-  private class DrawArea extends JPanel {
+  private class Canvas extends JPanel {
     private final BufferedImage image = document.getEditView();
     private int marginx, marginy;
     @Override
