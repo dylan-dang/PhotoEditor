@@ -7,8 +7,7 @@ import javax.imageio.*;
 void setup() {
   //styling
   com.formdev.flatlaf.FlatDarkLaf.install();
-
-  new BlendCompositeDemo().setVisible(true);
+  
   //hook into Processing frame and setup
   size(800, 600);
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
