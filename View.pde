@@ -208,9 +208,12 @@ class ColorSelector extends JPanel {
   }
 }
 
+import java.util.Arrays;
 public class DocumentView extends JPanel {
   private Document document;
   private JPanel infoBar = new JPanel();
+  private final float[] funcTable = {2,3,4,5,6,7,8,9,10,12.5,17,20,25,33.33,50,66.67,100,150,200,300,400,500,600,800,1000,1200,1400,1600,2000,2400,3200,4000,4800,5600,6400};
+  private JSlider slider;
   private float scale = 1;
   private JPanel canvasWrapper = new JPanel(new GridBagLayout());
   private Canvas canvas;
@@ -223,12 +226,19 @@ public class DocumentView extends JPanel {
     canvasWrapper.add(canvas = new Canvas());
 
     infoBar.setLayout(new BoxLayout(infoBar, BoxLayout.X_AXIS));
-    JSlider slider = new JSlider(1, 2000, 100);
+    slider = new JSlider(JSlider.HORIZONTAL, 0, funcTable.length - 1, funcTable.length / 2);
+    //slider.setPaintTicks(true);
+    //slider.setMajorTickSpacing(1);
+    slider.setSnapToTicks(true);
     slider.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        setScale((float)((JSlider)e.getSource()).getValue() / 100f);
+        JSlider source = (JSlider)e.getSource();
+        if (source.getValueIsAdjusting())
+        setScale(funcTable[source.getValue()] / 100);
       }
     });
+
+    infoBar.add(Box.createGlue());
     infoBar.add(slider);
     add(infoBar, BorderLayout.SOUTH);
 
@@ -241,7 +251,7 @@ public class DocumentView extends JPanel {
     MouseAdapter scrollListener = new MouseAdapter() {
       void mouseWheelMoved(MouseWheelEvent e) {
         super.mouseWheelMoved(e);
-        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 200),
+        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64),
                  e.getSource() instanceof JViewport ? null : e.getPoint());
       }
     };
@@ -304,6 +314,13 @@ public class DocumentView extends JPanel {
         viewPos.y + round(pos.y * deltaScale) - pos.y
       ));
     }
+    int lastTick = 0;
+    while (lastTick < funcTable.length && scale >= funcTable[lastTick] / 100) {
+      lastTick++;
+    }
+    if (!slider.getValueIsAdjusting())
+    slider.setValue(lastTick);
+
     canvas.revalidate();
     viewport.repaint();
   }
