@@ -8,9 +8,12 @@ public class Controller {
   private View view;
   final JFXPanel jfxPanel = new JFXPanel();
   Controller controller = this;
+  CloseHandler closeHandler;
 
   Controller(View view) {
     this.view = view;
+    closeHandler = new CloseHandler(view);
+    view.getFrame().addWindowListener(closeHandler);
     addAllMenuBarItems();
   }
 
@@ -174,7 +177,7 @@ public class Controller {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      exit();
+      closeHandler.windowClosing(null);
     }
   }
 
@@ -208,6 +211,35 @@ public class Controller {
       view.getFrame().setEnabled(true);
       view.getFrame().setAlwaysOnTop(false);
       return file;
+    }
+  }
+}
+
+private class CloseHandler extends WindowAdapter {
+  private View view;
+  private final String[] options = {"Save", "Don't Save", "Cancel"};
+  public final int SAVE = 0, DONT_SAVE = 1, CANCEL = 2;
+  CloseHandler(View view) {
+    this.view = view;
+    view.getFrame().setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+  }
+
+  public int showWarning(String name) {
+    return JOptionPane.showOptionDialog(view.getFrame(),
+      String.format("Save changes to %s?", name),
+      "Warning",
+      JOptionPane.YES_NO_CANCEL_OPTION,
+      JOptionPane.WARNING_MESSAGE,
+      null,
+      options,
+      options[0]
+    );
+  }
+  @Override
+  public void windowClosing(WindowEvent e) {
+    if (!view.hasDocumentView()) forceExit();
+    if (showWarning("documents") != CANCEL) {
+      forceExit();
     }
   }
 }

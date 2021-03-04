@@ -120,6 +120,23 @@ public class View extends JPanel {
   public DocumentView getSelectedDocumentView() {
     return (DocumentView) imageTabs.getSelectedComponent();
   }
+  public Document getSelectedDocument() {
+    DocumentView docView = (DocumentView) imageTabs.getSelectedComponent();
+    return imageTabs.getTabCount() == 0 ? null : docView.getDocument();
+  }
+  public boolean hasDocumentView() {
+    return !(getDocumentCount() == 0);
+  }
+  public int getDocumentCount() {
+    return imageTabs.getTabCount();
+  }
+  public DocumentView[] getDocumentViews() {
+    DocumentView[] docViews = new DocumentView[getDocumentCount()];
+    for (int i = 0; i < docViews.length; i++) {
+      docViews[i] = (DocumentView)imageTabs.getTabComponentAt(i);
+    }
+    return docViews;
+  }
 }
 
 class ColorSelector extends JPanel {
@@ -260,7 +277,7 @@ public class DocumentView extends JPanel {
   }
 
   private class Canvas extends JPanel {
-    private final BufferedImage image = document.getEditView();
+    private final BufferedImage image = document.getFlattenedView();
     private int marginx, marginy;
     @Override
     public void paintComponent(Graphics g) {
@@ -297,6 +314,9 @@ public class DocumentView extends JPanel {
 
   public float getScale() {
     return scale;
+  }
+  public Document getDocument() {
+    return document;
   }
 
   public void setScale(float scale, Point pos) {

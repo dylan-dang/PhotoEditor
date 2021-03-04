@@ -30,7 +30,7 @@ public class Document {
     return name;
   }
 
-  BufferedImage getEditView() {
+  BufferedImage getFlattenedView() {
     return layers.get(0).getLayerData();
   }
 

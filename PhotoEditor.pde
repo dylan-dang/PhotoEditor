@@ -8,10 +8,10 @@ void setup() {
   //styling
   com.formdev.flatlaf.FlatDarkLaf.install();
 
+  new BlendCompositeDemo().setVisible(true);
   //hook into Processing frame and setup
   size(800, 600);
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
-  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   frame.setResizable(true);
   frame.setTitle("Photo Editor");
   View view = new View(frame);
@@ -21,5 +21,10 @@ void setup() {
   surface.setIcon(loadImage("https://image.flaticon.com/icons/png/512/196/196278.png"));
 
   noLoop();
+}
 
+void exit() {}
+
+void forceExit() {
+  super.exit();
 }
