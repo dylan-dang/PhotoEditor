@@ -2,6 +2,8 @@ import java.util.Vector;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 
+private final Color CONTENT_BACKGROUND = new Color(0x282828);
+
 public class View extends JPanel {
   private JFrame frame;
   private DnDTabbedPane imageTabs;
@@ -34,10 +36,18 @@ public class View extends JPanel {
 
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
-    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     splitPane.setLeftComponent(imageTabs);
     splitPane.setRightComponent(new JTree());
     splitPane.setResizeWeight(1.0);
+    splitPane.setBackground(CONTENT_BACKGROUND);
+
+    imageTabs.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        JTabbedPane source = (JTabbedPane) e.getSource();
+        splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : SwingUtilities.getRootPane(source).getContentPane().getBackground());
+      }
+    });
 
     add(splitPane, BorderLayout.CENTER);
 
@@ -47,7 +57,6 @@ public class View extends JPanel {
   private class ToolBar extends JToolBar {
     ToolBar() {
       ColorSelector selector = new ColorSelector();
-      selector.setPreferredSize(new Dimension(32, 32));
       addRigidSpace(8);
       add(selector);
       addRigidSpace(8);
@@ -64,6 +73,7 @@ public class View extends JPanel {
           group.add(button);
         }
       }
+      group.setSelected(group.getElements().nextElement().getModel(), true);
       //when parent changes and floating, set toolbar frame to undecorated
       //because minimum native frame width is too wide, and also looks better
       addHierarchyListener(new HierarchyListener() {
@@ -86,6 +96,7 @@ public class View extends JPanel {
       ));
       setOrientation(JToolBar.VERTICAL);
     }
+
     private void addRigidSpace(int length) {
       add(Box.createRigidArea(new Dimension(length, length)));
     }
@@ -101,6 +112,7 @@ public class View extends JPanel {
 
   public DocumentView addDocumentView(Document doc) {
     DocumentView docView =  new DocumentView(doc);
+    docView.setCanvasBackground(CONTENT_BACKGROUND);
     imageTabs.addTab(doc.getName(), docView);
     return docView;
   }
@@ -147,69 +159,70 @@ class ColorSelector extends JPanel {
       }
     });
   }
+
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
     final Color foreground = new Color(0xADADAD);
     //color squares
     Graphics2D g2 = (Graphics2D) g;
-    drawColorArea(g2, secondaryArea, secondary.getColor());
-    drawColorArea(g2, primaryArea, primary.getColor());
+    drawColorArea(g2, secondaryArea, Color.black, Color.white, secondary.getColor());
+    drawColorArea(g2, primaryArea,  Color.black, Color.white, primary.getColor());
 
-    g2.scale((double)getPreferredSize().width / 32, (double)getPreferredSize().height / 32);
+    g2.scale((double)getPreferredSize().width / 32d, (double)getPreferredSize().height / 32d);
+
     //default
-    g.setColor(foreground);
-    g.fillRect(3, 24, 7, 7);
-    g.setColor(Color.white);
-    g.fillRect(4, 25, 5, 5);
-    g.setColor(foreground);
-    g.fillRect(0, 21, 7, 7);
-    g.setColor(Color.black);
-    g.fillRect(1, 22, 5, 5);
-    //switch arrows
-    g.setColor(foreground);
-    g.fillPolygon(new int[]{24, 21, 24}, new int[]{0, 3, 6}, 3);
-    g.drawLine(24, 3, 28, 3);
-    g.drawLine(28, 3, 28, 7);
-    g.fillPolygon(new int[]{25, 28, 31}, new int[]{7, 10, 7}, 3);
+    drawColorArea(g2, new Rectangle(3, 24, 7, 7), foreground, Color.white);
+    drawColorArea(g2, new Rectangle(0, 21, 7, 7), foreground, Color.black);
 
+    g.setColor(foreground);
+    Polygon arrows = new Polygon(new int[] {28, 23, 23, 21, 23, 23, 28, 28, 26, 28, 30, 28, 28},
+                                 new int[] {3, 3, 1, 3, 5, 3, 3, 8, 8, 10, 8, 8, 3},
+                                 13);
+    g2.translate(0, -32 / getPreferredSize().height + .2);
+    g.fillPolygon(arrows);
+    g.drawPolygon(arrows);
     g2.dispose();
   }
-  private void drawColorArea(Graphics2D g, Rectangle area, Color fill) {
-    area = new Rectangle(area);
-    for (Color c: new Color[] {Color.black, Color.white, fill}) {
+
+  private void drawColorArea(Graphics2D g, Rectangle area, Color... fill) {
+    area = (Rectangle) area.clone();
+    for (Color c: fill) {
       g.setPaint(c);
       g.fill(area);
       area.grow(-1, -1);
     }
   }
+
   @Override
   void setPreferredSize(Dimension size) {
     super.setPreferredSize(size);
     setMaximumSize(size);
     setMinimumSize(size);
-    double scalex = size.width / 32;
-    double scaley = size.height / 32;
-    primaryArea.setRect(0, 0, 20 * scalex, 20 * scaley);
-    secondaryArea.setRect(11 * scalex, 11 * scaley, 20 * scalex, 20 * scaley);
-    trCorner.setRect(20 * scalex, 0, 12 * scalex, 12 * scaley);
-    blCorner.setRect(0, 20*scaley, 12 * scalex, 12 * scaley);
+    double scalex = size.width / 32d;
+    double scaley = size.height / 32d;
+    primaryArea.setRect(0, 0, 20d * scalex, 20d * scaley);
+    secondaryArea.setRect(11d * scalex, 11d * scaley, 20d * scalex, 20d * scaley);
+    trCorner.setRect(20d * scalex, 0, 12d * scalex, 12d * scaley);
+    blCorner.setRect(0, 20d * scaley, 12d * scalex, 12d * scaley);
   }
 }
 
 public class DocumentView extends JPanel {
   private Document document;
-  private JPanel infoBar;
+  private JPanel infoBar = new JPanel();
   private float scale = 1;
+  private JPanel canvasWrapper = new JPanel(new GridBagLayout());
   private Canvas canvas;
-  private JPanel canvasWrapper;
-  //private boolean blocked = false;
-  JScrollPane scrollPane = new JScrollPane();
+  private JScrollPane scrollPane = new JScrollPane();
+  private JViewport viewport = scrollPane.getViewport();
+
   DocumentView(Document document) {
     this.document = document;
     setLayout(new BorderLayout());
+    canvasWrapper.add(canvas = new Canvas());
 
-    infoBar = new JPanel();
+    infoBar.setLayout(new BoxLayout(infoBar, BoxLayout.X_AXIS));
     JSlider slider = new JSlider(1, 2000, 100);
     slider.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -219,27 +232,23 @@ public class DocumentView extends JPanel {
     infoBar.add(slider);
     add(infoBar, BorderLayout.SOUTH);
 
-    canvasWrapper = new JPanel(new GridBagLayout());
-    canvasWrapper.add(canvas = new Canvas());
-
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-    scrollPane.getViewport().add(canvasWrapper);
+    canvasWrapper.setBackground(CONTENT_BACKGROUND);
+    viewport.add(canvasWrapper);
     add(scrollPane, BorderLayout.CENTER);
 
-    canvas.addMouseWheelListener(new MouseAdapter() {
+    MouseAdapter scrollListener = new MouseAdapter() {
       void mouseWheelMoved(MouseWheelEvent e) {
         super.mouseWheelMoved(e);
-        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 200), e.getPoint());
+        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 200),
+                 e.getSource() instanceof JViewport ? null : e.getPoint());
       }
-    });
-    scrollPane.getViewport().addMouseWheelListener(new MouseAdapter() {
-      void mouseWheelMoved(MouseWheelEvent e) {
-        super.mouseWheelMoved(e);
-        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 200));
-      }
-    });
+    };
+    canvas.addMouseWheelListener(scrollListener);
+    viewport.addMouseWheelListener(scrollListener);
   }
+
   private class Canvas extends JPanel {
     private final BufferedImage image = document.getEditView();
     private int marginx, marginy;
@@ -264,25 +273,44 @@ public class DocumentView extends JPanel {
     }
   }
 
+  public void setCanvasBackground(Color c) {
+    canvasWrapper.setBackground(c);
+  }
+
+  public JViewport getViewport() {
+    return viewport;
+  }
+
+  public Canvas getCanvas() {
+    return canvas;
+  }
+
+  public float getScale() {
+    return scale;
+  }
+
   public void setScale(float scale, Point pos) {
-    JViewport vp = scrollPane.getViewport();
+    if(pos == null) {
+      setScale(scale);
+      return;
+    }
     float deltaScale = scale / this.scale;
     this.scale = scale;
     //if canvas is smaller than viewport, no need to translate the view position
-    if(canvas.largerThan(vp.getExtentSize())) {
-      Point viewPos = vp.getViewPosition();
-      vp.setViewPosition(new Point(
+    if(canvas.largerThan(viewport.getExtentSize())) {
+      Point viewPos = viewport.getViewPosition();
+      viewport.setViewPosition(new Point(
         viewPos.x + round(pos.x * deltaScale) - pos.x,
         viewPos.y + round(pos.y * deltaScale) - pos.y
       ));
     }
     canvas.revalidate();
-    scrollPane.getViewport().repaint();
+    viewport.repaint();
   }
 
   public void setScale(float scale) {
     //default to center of viewrect
-    Rectangle viewRect = scrollPane.getViewport().getViewRect();
+    Rectangle viewRect = viewport.getViewRect();
     setScale(scale, new Point(viewRect.x + viewRect.width / 2, viewRect.y + viewRect.height / 2));
   }
 }
