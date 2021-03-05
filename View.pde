@@ -6,7 +6,7 @@ private final Color CONTENT_BACKGROUND = new Color(0x282828);
 
 public class View extends JPanel {
   private JFrame frame;
-  private DnDTabbedPane imageTabs;
+  private JTabbedPane imageTabs;
   private HashMap<String, JMenu> menus = new HashMap<String, JMenu>();
 
   View(final JFrame f) {
@@ -110,32 +110,14 @@ public class View extends JPanel {
     return menus.get(menuName);
   }
 
-  public DocumentView addDocumentView(Document doc) {
+  public DocumentView addDocument(Document doc) {
     DocumentView docView =  new DocumentView(doc);
     docView.setCanvasBackground(CONTENT_BACKGROUND);
-    imageTabs.addTab(doc.getName(), docView);
+    imageTabs.addTab(doc.getName() + (doc.isSaved() ? "" : " *"), docView);
     return docView;
   }
-
-  public DocumentView getSelectedDocumentView() {
-    return (DocumentView) imageTabs.getSelectedComponent();
-  }
-  public Document getSelectedDocument() {
-    DocumentView docView = (DocumentView) imageTabs.getSelectedComponent();
-    return imageTabs.getTabCount() == 0 ? null : docView.getDocument();
-  }
-  public boolean hasDocumentView() {
-    return !(getDocumentCount() == 0);
-  }
-  public int getDocumentCount() {
-    return imageTabs.getTabCount();
-  }
-  public DocumentView[] getDocumentViews() {
-    DocumentView[] docViews = new DocumentView[getDocumentCount()];
-    for (int i = 0; i < docViews.length; i++) {
-      docViews[i] = (DocumentView)imageTabs.getTabComponentAt(i);
-    }
-    return docViews;
+  public JTabbedPane getImageTabs() {
+    return imageTabs; //i was going to make it so only document view were public but passing documentviews was a hassle
   }
 }
 
@@ -225,7 +207,6 @@ class ColorSelector extends JPanel {
   }
 }
 
-import java.util.Arrays;
 public class DocumentView extends JPanel {
   private Document document;
   private JPanel infoBar = new JPanel();
@@ -243,6 +224,9 @@ public class DocumentView extends JPanel {
     canvasWrapper.add(canvas = new Canvas());
 
     infoBar.setLayout(new BoxLayout(infoBar, BoxLayout.X_AXIS));
+    infoBar.add(Box.createGlue());
+    infoBar.add(new JSpinner());
+
     slider = new JSlider(JSlider.HORIZONTAL, 0, funcTable.length - 1, funcTable.length / 2);
     //slider.setPaintTicks(true);
     //slider.setMajorTickSpacing(1);
@@ -265,20 +249,33 @@ public class DocumentView extends JPanel {
     viewport.add(canvasWrapper);
     add(scrollPane, BorderLayout.CENTER);
 
-    MouseAdapter scrollListener = new MouseAdapter() {
+    MouseAdapter mouseListener = new MouseAdapter() {
+      @Override
       void mouseWheelMoved(MouseWheelEvent e) {
-        super.mouseWheelMoved(e);
         setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64),
                  e.getSource() instanceof JViewport ? null : e.getPoint());
       }
+      @Override
+      void mouseDragged(MouseEvent e) {
+        Point pos = e.getPoint();
+        JComponent source = (JComponent)e.getSource();
+        if(source.getLayout() instanceof GridBagLayout) { //wrapper
+          pos.translate(-(source.getWidth()-canvas.getWidth()) / 2, -(source.getHeight()-canvas.getHeight()) / 2);
+        }
+        pos.x = round(pos.x / scale);
+        pos.y = round(pos.y / scale);
+        //if (new Rectangle(0, 0, 1601, 600).contains(pos))
+        println(pos.x, pos.y);
+      }
     };
-    canvas.addMouseWheelListener(scrollListener);
-    viewport.addMouseWheelListener(scrollListener);
+    canvas.addMouseWheelListener(mouseListener);
+    canvas.addMouseMotionListener(mouseListener);
+    canvasWrapper.addMouseMotionListener(mouseListener);
+    canvasWrapper.addMouseWheelListener(mouseListener);
   }
-
+  
   private class Canvas extends JPanel {
     private final BufferedImage image = document.getFlattenedView();
-    private int marginx, marginy;
     @Override
     public void paintComponent(Graphics g) {
       super.paintComponent(g);
@@ -304,17 +301,10 @@ public class DocumentView extends JPanel {
     canvasWrapper.setBackground(c);
   }
 
-  public JViewport getViewport() {
-    return viewport;
-  }
-
-  public Canvas getCanvas() {
-    return canvas;
-  }
-
   public float getScale() {
     return scale;
   }
+
   public Document getDocument() {
     return document;
   }
@@ -324,8 +314,11 @@ public class DocumentView extends JPanel {
       setScale(scale);
       return;
     }
+
     float deltaScale = scale / this.scale;
+
     this.scale = scale;
+
     //if canvas is smaller than viewport, no need to translate the view position
     if(canvas.largerThan(viewport.getExtentSize())) {
       Point viewPos = viewport.getViewPosition();
@@ -334,6 +327,7 @@ public class DocumentView extends JPanel {
         viewPos.y + round(pos.y * deltaScale) - pos.y
       ));
     }
+
     int lastTick = 0;
     while (lastTick < funcTable.length && scale >= funcTable[lastTick] / 100) {
       lastTick++;
@@ -343,6 +337,7 @@ public class DocumentView extends JPanel {
 
     canvas.revalidate();
     viewport.repaint();
+
   }
 
   public void setScale(float scale) {

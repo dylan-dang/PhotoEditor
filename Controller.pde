@@ -8,17 +8,16 @@ public class Controller {
   private View view;
   final JFXPanel jfxPanel = new JFXPanel();
   Controller controller = this;
-  CloseHandler closeHandler;
 
   Controller(View view) {
     this.view = view;
-    closeHandler = new CloseHandler(view);
-    view.getFrame().addWindowListener(closeHandler);
+    view.getFrame().addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        new ExitAction().execute();
+      }
+    });
     addAllMenuBarItems();
-  }
-
-  void addDocument(Document doc) {
-    view.addDocumentView(doc);
   }
 
   public void addAllMenuBarItems() {
@@ -74,6 +73,9 @@ public class Controller {
     public MenuBarAction(String name) {
       this(name, null);
     }
+    public void execute() {
+      actionPerformed(new ActionEvent(view.getFrame(), ActionEvent.ACTION_FIRST, null));
+    }
   }
 
   //File Menu Actions
@@ -85,7 +87,7 @@ public class Controller {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      controller.addDocument(new Document(800, 600));
+      view.addDocument(new Document(800, 600));
     }
   }
 
@@ -99,7 +101,7 @@ public class Controller {
     @Override
     public void actionPerformed(ActionEvent e) {
       File file = promptFile(true);
-      if (file != null) addDocument(new Document(file));
+      if (file != null) view.addDocument(new Document(file));
     }
   }
 
@@ -126,13 +128,38 @@ public class Controller {
   }
 
   public class CloseFileAction extends MenuBarAction {
-    public CloseFileAction() {
+    private final String[] options = {"Save", "Don't Save", "Cancel"};
+    private final int SAVE = 0, DONT_SAVE = 1, CANCEL = 2;
+    private int index;
+    private int response = 2;
+
+    public CloseFileAction(int index) {
       super("Close", "ctrl W");
+      this.index = index;
+    }
+
+    public CloseFileAction() {
+      this(-1);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      //TODO create action
+      int i = index == -1 ? view.getImageTabs().getSelectedIndex() : index;
+      JTabbedPane imageTabs = view.getImageTabs();
+      DocumentView docView = (DocumentView) imageTabs.getComponentAt(i);
+      if (!docView.getDocument().isSaved()) {
+        response = JOptionPane.showOptionDialog(view.getFrame(),
+          String.format("Save changes to %s before closing?", docView.getDocument().getName()),
+          "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
+        switch(response) {
+          case CANCEL: return;
+          case SAVE: new SaveAction().execute();
+        }
+      } else {response = SAVE;}
+      imageTabs.remove(i);
+    }
+    public boolean getSuccess() {
+      return response != CANCEL;
     }
   }
 
@@ -143,7 +170,9 @@ public class Controller {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      //TODO create action
+      for(int i = 0; i < view.getImageTabs().getTabCount(); i++) {
+        new CloseFileAction(i).execute();
+      }
     }
   }
 
@@ -177,12 +206,15 @@ public class Controller {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      closeHandler.windowClosing(null);
+      new CloseAllAction().execute();
+      if (view.getImageTabs().getTabCount() == 0) {
+        forceExit();
+      }
     }
   }
 
   private File file; //hacky, i know
-  private File promptFile(final boolean isOpen, ExtensionFilter... filters) {
+  private File promptFile(final boolean isOpen) {
     final FileChooser fileChooser = new FileChooser();
     if (isOpen) fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Image Types", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif", "*.bmp", ".dib", "*.wbmp", "*.gif"));
     fileChooser.getExtensionFilters().addAll(
@@ -212,34 +244,6 @@ public class Controller {
       view.getFrame().setAlwaysOnTop(false);
       return file;
     }
-  }
-}
 
-private class CloseHandler extends WindowAdapter {
-  private View view;
-  private final String[] options = {"Save", "Don't Save", "Cancel"};
-  public final int SAVE = 0, DONT_SAVE = 1, CANCEL = 2;
-  CloseHandler(View view) {
-    this.view = view;
-    view.getFrame().setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-  }
-
-  public int showWarning(String name) {
-    return JOptionPane.showOptionDialog(view.getFrame(),
-      String.format("Save changes to %s?", name),
-      "Warning",
-      JOptionPane.YES_NO_CANCEL_OPTION,
-      JOptionPane.WARNING_MESSAGE,
-      null,
-      options,
-      options[0]
-    );
-  }
-  @Override
-  public void windowClosing(WindowEvent e) {
-    if (!view.hasDocumentView()) forceExit();
-    if (showWarning("documents") != CANCEL) {
-      forceExit();
-    }
   }
 }

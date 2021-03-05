@@ -7,12 +7,12 @@ import javax.imageio.*;
 void setup() {
   //styling
   com.formdev.flatlaf.FlatDarkLaf.install();
-  
+
   //hook into Processing frame and setup
   size(800, 600);
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
-  frame.setResizable(true);
   frame.setTitle("Photo Editor");
+  frame.setResizable(true);
   View view = new View(frame);
   Controller controller = new Controller(view);
 

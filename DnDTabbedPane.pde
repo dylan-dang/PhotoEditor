@@ -62,7 +62,6 @@ public class DnDTabbedPane extends JTabbedPane {
 			}
 
 			public void dragDropEnd(DragSourceDropEvent e) {
-        println("bruh");
 				m_isDrawRect = true;
 				m_lineRect.setRect(0, 0, 0, 0);
 				// m_dragTabIndex = -1;
@@ -73,7 +72,6 @@ public class DnDTabbedPane extends JTabbedPane {
 				}
 
         if(!e.getDropSuccess()){
-          println("bruh");
             // MenuLight class Extends JFrame and Included 1 component JTabbedPane called superPane
             DnDTabbedPane windowTabbedPane = new DnDTabbedPane();
             windowTabbedPane.add(new JTree());
@@ -171,7 +169,7 @@ public class DnDTabbedPane extends JTabbedPane {
 			m_tabIndex = a_tabIndex;
 		}
 
-		public DnDTabbedPane getTabbedPane() {
+		public DnDTabbedPane getImageTabs() {
 			return m_tabbedPane;
 		}
 
@@ -275,8 +273,8 @@ public class DnDTabbedPane extends JTabbedPane {
 
 			if (t == null) return false;
 			if (!t.isDataFlavorSupported(flavor[0])) return false;
-			if (DnDTabbedPane.this == data.getTabbedPane() && data.getTabIndex() >= 0) return true;
-			if (DnDTabbedPane.this != data.getTabbedPane()) return m_acceptor;
+			if (DnDTabbedPane.this == data.getImageTabs() && data.getTabIndex() >= 0) return true;
+			if (DnDTabbedPane.this != data.getImageTabs()) return m_acceptor;
 
 			return false;
 		}
@@ -288,8 +286,8 @@ public class DnDTabbedPane extends JTabbedPane {
 
 			if (t == null) return false;
 			if (!t.isDataFlavorSupported(flavor[0])) return false;
-			if (DnDTabbedPane.this == data.getTabbedPane() && data.getTabIndex() >= 0) return true;
-			if (DnDTabbedPane.this != data.getTabbedPane()) return m_acceptor;
+			if (DnDTabbedPane.this == data.getImageTabs() && data.getTabIndex() >= 0) return true;
+			if (DnDTabbedPane.this != data.getImageTabs()) return m_acceptor;
 
 			return false;
 		}
@@ -344,7 +342,7 @@ public class DnDTabbedPane extends JTabbedPane {
 	}
 
 	private void convertTab(TabTransferData a_data, int a_targetIndex) {
-		DnDTabbedPane source = a_data.getTabbedPane();
+		DnDTabbedPane source = a_data.getImageTabs();
 		int sourceIndex = a_data.getTabIndex();
 		if (sourceIndex < 0) {
 			return;
@@ -401,7 +399,7 @@ public class DnDTabbedPane extends JTabbedPane {
 			return;
 		}
 
-		if ((a_data.getTabbedPane() == this) && (a_data.getTabIndex() == next || next - a_data.getTabIndex() == 1)) {
+		if ((a_data.getImageTabs() == this) && (a_data.getTabIndex() == next || next - a_data.getTabIndex() == 1)) {
 			m_lineRect.setRect(0, 0, 0, 0);
 			m_isDrawRect = false;
 		} else if (getTabCount() == 0) {
@@ -430,7 +428,7 @@ public class DnDTabbedPane extends JTabbedPane {
 			return;
 		}
 
-		if ((a_data.getTabbedPane() == this)
+		if ((a_data.getImageTabs() == this)
 		    && (a_data.getTabIndex() == next
 		        || next - a_data.getTabIndex() == 1)) {
 			m_lineRect.setRect(0, 0, 0, 0);

@@ -4,7 +4,8 @@ import java.awt.image.BufferedImage;
 public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
-  private String name = "new image";
+  private String name = "Untitled";
+  private boolean isSaved = false;
 
   Document(int width, int height) {
     this.width = width;
@@ -34,25 +35,30 @@ public class Document {
     return layers.get(0).getLayerData();
   }
 
-  public class Layer {
-    BufferedImage image;
-    private String name;
-    private boolean visible;
-    private int opacity;
-    //TODO blendmodes
+  public boolean isSaved() {
+    return isSaved;
+  }
 
-    Layer() {
-      image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
-    }
+}
 
-    Layer(BufferedImage image) {
-      this.image = image;
-      visible = true;
-      opacity = 0xFF;
-    }
+public class Layer {
+  BufferedImage image;
+  private String name;
+  private boolean visible;
+  private int opacity;
+  //TODO blendmodes
 
-    BufferedImage getLayerData() {
-      return image;
-    }
+  Layer() {
+    image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
+  }
+
+  Layer(BufferedImage image) {
+    this.image = image;
+    visible = true;
+    opacity = 0xFF;
+  }
+
+  BufferedImage getLayerData() {
+    return image;
   }
 }
