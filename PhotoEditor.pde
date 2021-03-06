@@ -11,6 +11,7 @@ void setup() {
   //hook into Processing frame and setup
   size(800, 600);
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
+  frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
   frame.setTitle("Photo Editor");
   frame.setResizable(true);
   View view = new View(frame);
