@@ -1,6 +1,3 @@
-import java.util.ArrayList;
-import java.awt.image.BufferedImage;
-
 public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;

@@ -1,42 +1,67 @@
-import java.util.Vector;
-import java.awt.event.KeyEvent;
-import java.util.HashMap;
-
-private final Color CONTENT_BACKGROUND = new Color(0x282828);
 
 public class View extends JPanel {
+  public final Color CONTENT_BACKGROUND = new Color(0x282828);
+  private final JFXPanel jfxPanel = new JFXPanel();
+  private final ToolAction[] toolActions = {
+    new MoveAction(this),
+    new SelectAction(this),
+    new CropAction(this),
+    new EyeDropAction(this),
+    new BrushAction(this),
+    new PencilAction(this),
+    new EraserAction(this),
+    new FillAction(this),
+    new TextAction(this),
+    new PanAction(this),
+    new ZoomAction(this)
+  };
+
   private JFrame frame;
   private JTabbedPane imageTabs;
-  private HashMap<String, JMenu> menus = new HashMap<String, JMenu>();
+  private JMenuBar menuBar = new JMenuBar();
+  private ToolAction selectedTool;
 
-  View(final JFrame f) {
+  View(final JFrame frame) {
     //set the frame for the view to hook into
-    this.frame = f;
+    this.frame = frame;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        f.setContentPane(initView());
-        f.revalidate();
+        frame.setContentPane(initView());
+        frame.revalidate();
       }
     });
   }
 
   private View initView() {
-    //setup
     setLayout(new BorderLayout());
-    //create menubar
-    JMenuBar menuBar = new JMenuBar();
-    for (String menuName: new String[] {"File", "Edit", "View", "Image", "Layer", "Filter"}) {
-      JMenu menu = new JMenu(menuName);
-      menus.put(menuName, menu);
-      menuBar.add(menu);
-    }
+    //setup menubar
+    addMenuActions(new JMenu("File"), new MenuBarAction[] {
+      new NewFileAction(this),
+      new OpenFileAction(this), null,
+      new SaveAction(this),
+      new SaveAsAction(this),
+      null,
+      new CloseFileAction(this),
+      new CloseAllAction(this),
+      new CloseOtherAction(this),
+      null,
+      new PrintAction(this),
+      null,
+      new ExitAction(this)});
+    addMenuActions(new JMenu("Edit"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("View"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
     frame.setJMenuBar(menuBar);
 
     add(new ToolBar(), BorderLayout.WEST);
 
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
+
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    add(splitPane, BorderLayout.CENTER);
     splitPane.setLeftComponent(imageTabs);
     splitPane.setRightComponent(new JTree());
     splitPane.setResizeWeight(1.0);
@@ -49,9 +74,27 @@ public class View extends JPanel {
       }
     });
 
-    add(splitPane, BorderLayout.CENTER);
+
+    final View view = this;
+    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    frame.addWindowListener(new WindowAdapter() {
+      public void windowClosing(WindowEvent e) {
+        new ExitAction(view).execute();
+      }
+    });
 
     return this;
+  }
+
+  private void addMenuActions(JMenu menu, MenuBarAction[] actions) {
+    menuBar.add(menu);
+    for(MenuBarAction action: actions) {
+      if (action == null) {
+        menu.addSeparator();
+      } else {
+        menu.add(action);
+      }
+    }
   }
 
   private class ToolBar extends JToolBar {
@@ -61,17 +104,16 @@ public class View extends JPanel {
       add(selector);
       addRigidSpace(8);
       ButtonGroup group = new ButtonGroup();
-      for(String tool: new File(sketchPath("resources/tools")).list()) {
-        if (tool.endsWith(".png")) {
-          JToggleButton button = new JToggleButton(new ImageIcon(sketchPath(String.format("resources/tools/%s", tool))));
-          Dimension size = new Dimension(32, 24);
-          button.setPreferredSize(size);
-          button.setMaximumSize(size);
-          button.setMinimumSize(size);
-          add(button);
-          button.setAlignmentX(CENTER_ALIGNMENT);
-          group.add(button);
-        }
+
+      for (ToolAction tool: toolActions) {
+        JToggleButton button = new JToggleButton(tool);
+        Dimension size = new Dimension(32, 24);
+        button.setPreferredSize(size);
+        button.setMaximumSize(size);
+        button.setMinimumSize(size);
+        button.setAlignmentX(CENTER_ALIGNMENT);
+        group.add(button);
+        add(button);
       }
       group.setSelected(group.getElements().nextElement().getModel(), true);
       //when parent changes and floating, set toolbar frame to undecorated
@@ -106,104 +148,22 @@ public class View extends JPanel {
     return this.frame;
   }
 
-  public JMenu getMenu(String menuName) {
-    return menus.get(menuName);
-  }
-
   public DocumentView addDocument(Document doc) {
     DocumentView docView =  new DocumentView(doc, this);
     docView.setCanvasBackground(CONTENT_BACKGROUND);
     imageTabs.addTab(doc.getName() + (doc.isSaved() ? "" : " *"), docView);
     return docView;
   }
+
   public JTabbedPane getImageTabs() {
-    //i was going to make it so only getting document view would be public but passing documentviews was a hassle, i can use index number this way
     return imageTabs;
   }
-}
 
-class ColorSelector extends JPanel {
-  private Rectangle primaryArea = new Rectangle(),
-                    secondaryArea = new Rectangle(),
-                    trCorner = new Rectangle(),
-                    blCorner = new Rectangle();
-  private JColorChooser primary, secondary;
-
-  ColorSelector() {
-    primary = new JColorChooser(Color.black);
-    secondary = new JColorChooser(Color.white);
-    primary.setPreviewPanel(new JPanel());
-    secondary.setPreviewPanel(new JPanel());
-
-    setPreferredSize(new Dimension(32, 32));
-
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        Point mousePos = e.getPoint();
-        if (primaryArea.contains(mousePos)) {
-          primary.createDialog((ColorSelector)e.getSource(), "Color Picker (Primary Color)" , true, primary, null, null).setVisible(true);
-        } else if (secondaryArea.contains(mousePos)) {
-          secondary.createDialog((ColorSelector)e.getSource(), "Color Picker (Secondary Color)" , true, secondary, null, null).setVisible(true);
-        } else if (blCorner.contains(mousePos)) {
-          primary.setColor(Color.black);
-          secondary.setColor(Color.white);
-        } else if (trCorner.contains(mousePos)) {
-          Color temp = primary.getColor();
-          primary.setColor(secondary.getColor());
-          secondary.setColor(temp);
-        } else {
-          return;
-        }
-        repaint();
-      }
-    });
+  public ToolAction getSelectedTool() {
+    return selectedTool;
   }
-
-  @Override
-  public void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    final Color foreground = new Color(0xADADAD);
-    //color squares
-    Graphics2D g2 = (Graphics2D) g;
-    drawColorArea(g2, secondaryArea, Color.black, Color.white, secondary.getColor());
-    drawColorArea(g2, primaryArea,  Color.black, Color.white, primary.getColor());
-
-    g2.scale((double)getPreferredSize().width / 32d, (double)getPreferredSize().height / 32d);
-
-    //default
-    drawColorArea(g2, new Rectangle(3, 24, 7, 7), foreground, Color.white);
-    drawColorArea(g2, new Rectangle(0, 21, 7, 7), foreground, Color.black);
-
-    g.setColor(foreground);
-    Polygon arrows = new Polygon(new int[] {28, 23, 23, 21, 23, 23, 28, 28, 26, 28, 30, 28, 28},
-                                 new int[] {3, 3, 1, 3, 5, 3, 3, 8, 8, 10, 8, 8, 3},
-                                 13);
-    g2.translate(0, -32 / getPreferredSize().height + .2);
-    g.fillPolygon(arrows);
-    g.drawPolygon(arrows);
-    g2.dispose();
-  }
-
-  private void drawColorArea(Graphics2D g, Rectangle area, Color... fill) {
-    area = (Rectangle) area.clone();
-    for (Color c: fill) {
-      g.setPaint(c);
-      g.fill(area);
-      area.grow(-1, -1);
-    }
-  }
-
-  @Override
-  void setPreferredSize(Dimension size) {
-    super.setPreferredSize(size);
-    setMaximumSize(size);
-    setMinimumSize(size);
-    double scalex = size.width / 32d;
-    double scaley = size.height / 32d;
-    primaryArea.setRect(0, 0, 20d * scalex, 20d * scaley);
-    secondaryArea.setRect(11d * scalex, 11d * scaley, 20d * scalex, 20d * scaley);
-    trCorner.setRect(20d * scalex, 0, 12d * scalex, 12d * scaley);
-    blCorner.setRect(0, 20d * scaley, 12d * scalex, 12d * scaley);
+  
+  public void setSelectedTool(ToolAction selectedTool) {
+    this.selectedTool = selectedTool;
   }
 }

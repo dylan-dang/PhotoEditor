@@ -38,28 +38,40 @@ public class DocumentView extends JPanel {
 
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-    canvasWrapper.setBackground(CONTENT_BACKGROUND);
+    canvasWrapper.setBackground(view.CONTENT_BACKGROUND);
     viewport.add(canvasWrapper);
     add(scrollPane, BorderLayout.CENTER);
 
     MouseAdapter mouseListener = new MouseAdapter() {
+      Point2D pos = new Point2D.Double(0, 0);
+
       @Override
       void mouseWheelMoved(MouseWheelEvent e) {
         setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64),
                  e.getSource() instanceof JViewport ? null : e.getPoint());
       }
       @Override
+      void mouseMoved(MouseEvent e) {
+        updatePos(e);
+      }
+
+      @Override
       void mouseDragged(MouseEvent e) {
-        Point pos = e.getPoint();
+        updatePos(e);
+      }
+      @Override
+      void mousePressed(MouseEvent e) {
+        updatePos(e);
+      }
+
+      void updatePos(MouseEvent e) {
+        Point mouse = e.getPoint();
         JComponent source = (JComponent)e.getSource();
         if(source.getLayout() instanceof GridBagLayout) { //wrapper
           Component canvas = source.getComponent(0);
-          pos.translate(-(source.getWidth()-canvas.getWidth()) / 2, -(source.getHeight()-canvas.getHeight()) / 2);
+          mouse.translate(-(source.getWidth()-canvas.getWidth()) / 2, -(source.getHeight()-canvas.getHeight()) / 2);
         }
-        pos.x = round(pos.x / scale);
-        pos.y = round(pos.y / scale);
-        //if (new Rectangle(0, 0, 1601, 600).contains(pos))
-        println(pos.x, pos.y);
+        pos.setLocation(mouse.x / scale, mouse.y / scale);
       }
     };
     canvas.addMouseWheelListener(mouseListener);

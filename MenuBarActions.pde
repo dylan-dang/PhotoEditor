@@ -1,18 +1,16 @@
 //Super Menu bar action
 private abstract class MenuBarAction extends AbstractAction {
-  Controller controller;
   View view;
 
-  public MenuBarAction(Controller controller, String name, String accelerator) {
-    this.controller = controller;
-    this.view = controller.getView();
+  public MenuBarAction(View view, String name, String accelerator) {
+    this.view = view;
     putValue(NAME, name);
     putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(accelerator));
     //setEnabled(false);
   }
 
-  public MenuBarAction(Controller controller, String name) {
-    this(controller, name, null);
+  public MenuBarAction(View view, String name) {
+    this(view, name, null);
   }
 
   public void execute() {
@@ -55,8 +53,8 @@ private abstract class MenuBarAction extends AbstractAction {
 
 //File Menu Actions
 public class NewFileAction extends MenuBarAction {
-  public NewFileAction(Controller controller) {
-    super(controller, "New...", "ctrl N");
+  public NewFileAction(View view) {
+    super(view, "New...", "ctrl N");
     setEnabled(true);
   }
 
@@ -68,8 +66,8 @@ public class NewFileAction extends MenuBarAction {
 
 public class OpenFileAction extends MenuBarAction {
 
-  public OpenFileAction(Controller controller) {
-    super(controller, "Open...", "ctrl O");
+  public OpenFileAction(View view) {
+    super(view, "Open...", "ctrl O");
     setEnabled(true);
   }
 
@@ -81,8 +79,8 @@ public class OpenFileAction extends MenuBarAction {
 }
 
 public class SaveAction extends MenuBarAction {
-  public SaveAction(Controller controller) {
-    super(controller, "Save", "ctrl S");
+  public SaveAction(View view) {
+    super(view, "Save", "ctrl S");
   }
 
   @Override
@@ -92,8 +90,8 @@ public class SaveAction extends MenuBarAction {
 }
 
 public class SaveAsAction extends MenuBarAction {
-  public SaveAsAction(Controller controller) {
-    super(controller, "Save As...", "ctrl shift S");
+  public SaveAsAction(View view) {
+    super(view, "Save As...", "ctrl shift S");
   }
 
   @Override
@@ -108,13 +106,13 @@ public class CloseFileAction extends MenuBarAction {
   private int index;
   private int response = 2;
 
-  public CloseFileAction(Controller controller, int index) {
-    super(controller, "Close", "ctrl W");
+  public CloseFileAction(View view, int index) {
+    super(view, "Close", "ctrl W");
     this.index = index;
   }
 
-  public CloseFileAction(Controller controller) {
-    this(controller, -1);
+  public CloseFileAction(View view) {
+    this(view, -1);
   }
 
   @Override
@@ -128,7 +126,7 @@ public class CloseFileAction extends MenuBarAction {
         "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
       switch(response) {
         case CANCEL: return;
-        case SAVE: new SaveAction(controller).execute();
+        case SAVE: new SaveAction(view).execute();
       }
     } else {response = SAVE;}
     imageTabs.remove(i);
@@ -139,8 +137,8 @@ public class CloseFileAction extends MenuBarAction {
 }
 
 public class CloseAllAction extends MenuBarAction {
-  public CloseAllAction(Controller controller) {
-    super(controller, "Close All", "ctrl alt W");
+  public CloseAllAction(View view) {
+    super(view, "Close All", "ctrl alt W");
   }
 
   @Override
@@ -149,7 +147,7 @@ public class CloseAllAction extends MenuBarAction {
     for(int i = 0; i < tabCount; i++) {
       int lastTab = tabCount - i - 1;
       view.getImageTabs().setSelectedIndex(lastTab);
-      CloseFileAction closeFileAction = new CloseFileAction(controller, lastTab);
+      CloseFileAction closeFileAction = new CloseFileAction(view, lastTab);
       closeFileAction.execute();
       if (!closeFileAction.getSuccess()) {
         break;
@@ -159,8 +157,8 @@ public class CloseAllAction extends MenuBarAction {
 }
 
 public class CloseOtherAction extends MenuBarAction {
-  public CloseOtherAction(Controller controller) {
-    super(controller, "Close Others", "ctrl alt P");
+  public CloseOtherAction(View view) {
+    super(view, "Close Others", "ctrl alt P");
   }
 
   @Override
@@ -170,8 +168,8 @@ public class CloseOtherAction extends MenuBarAction {
 }
 
 public class PrintAction extends MenuBarAction {
-  public PrintAction(Controller controller) {
-    super(controller, "Print...", "ctrl P");
+  public PrintAction(View view) {
+    super(view, "Print...", "ctrl P");
   }
 
   @Override
@@ -181,14 +179,14 @@ public class PrintAction extends MenuBarAction {
 }
 
 public class ExitAction extends MenuBarAction {
-  public ExitAction(Controller controller) {
-    super(controller, "Exit", "ctrl Q");
+  public ExitAction(View view) {
+    super(view, "Exit", "ctrl Q");
     setEnabled(true);
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    new CloseAllAction(controller).execute();
+    new CloseAllAction(view).execute();
     if (view.getImageTabs().getTabCount() == 0) {
       forceExit();
     }
