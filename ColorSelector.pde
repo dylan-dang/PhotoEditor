@@ -82,4 +82,24 @@ class ColorSelector extends JPanel {
     trCorner.setRect(20d * scalex, 0, 12d * scalex, 12d * scaley);
     blCorner.setRect(0, 20d * scaley, 12d * scalex, 12d * scaley);
   }
+  void setPrimary(Color c) {
+    primary.setColor(c);
+    repaint();
+  }
+  void setSecondary(Color c) {
+    secondary.setColor(c);
+    repaint();
+  }
+  void setPrimary(int c) {
+    setPrimary(new Color(c));
+  }
+  void setSecondary(int c) {
+    setSecondary(new Color(c));
+  };
+  JColorChooser getPrimaryChooser() {
+    return primary;
+  }
+  JColorChooser getSecondaryChooser() {
+    return secondary;
+  }
 }

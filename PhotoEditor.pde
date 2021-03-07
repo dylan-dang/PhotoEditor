@@ -1,14 +1,14 @@
-import java.awt.event.*;
-import javax.swing.event.*;
-import java.awt.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.util.ArrayList;
-import java.awt.image.BufferedImage;
-import java.util.Vector;
-import java.awt.event.KeyEvent;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.imageio.*;
+
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.FileChooser;

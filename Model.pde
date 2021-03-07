@@ -35,6 +35,9 @@ public class Document {
   public boolean isSaved() {
     return isSaved;
   }
+  public ArrayList getLayers() {
+    return layers;
+  }
 
 }
 

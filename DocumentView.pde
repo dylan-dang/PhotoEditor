@@ -1,6 +1,6 @@
 public class DocumentView extends JPanel {
-  private Document document;
   private View view;
+  private Document document;
   private JPanel infoBar = new JPanel();
   private final float[] funcTable = {2,3,4,5,6,7,8,9,10,12.5,17,20,25,33.33,50,66.67,100,150,200,300,400,500,600,800,1000,1200,1400,1600,2000,2400,3200,4000,4800,5600,6400};
   private JSlider slider;
@@ -42,8 +42,11 @@ public class DocumentView extends JPanel {
     viewport.add(canvasWrapper);
     add(scrollPane, BorderLayout.CENTER);
 
+    final View finalView = view;
     MouseAdapter mouseListener = new MouseAdapter() {
       Point2D pos = new Point2D.Double(0, 0);
+      ToolAction tool;
+      DragGesture dragState;
 
       @Override
       void mouseWheelMoved(MouseWheelEvent e) {
@@ -58,14 +61,31 @@ public class DocumentView extends JPanel {
       @Override
       void mouseDragged(MouseEvent e) {
         updatePos(e);
+        dragState.dragTo(pos);
+        tool.execute();
       }
       @Override
       void mousePressed(MouseEvent e) {
         updatePos(e);
+        if (!dragState.isDragging()) {
+          dragState.start(pos, e.getButton());
+        } else {
+          dragState.pressButton(e.getButton());
+        }
+        tool.execute();
       }
-
+      @Override
+      void mouseReleased(MouseEvent e) {
+        updatePos(e);
+        dragState.releaseButton(e.getButton());
+        if (dragState.getButtons().isEmpty()) {
+          dragState.stop(pos);
+        }
+      }
       void updatePos(MouseEvent e) {
         Point mouse = e.getPoint();
+        tool = finalView.getSelectedTool();
+        dragState = tool.getDragState();
         JComponent source = (JComponent)e.getSource();
         if(source.getLayout() instanceof GridBagLayout) { //wrapper
           Component canvas = source.getComponent(0);
@@ -76,8 +96,10 @@ public class DocumentView extends JPanel {
     };
     canvas.addMouseWheelListener(mouseListener);
     canvas.addMouseMotionListener(mouseListener);
+    canvas.addMouseListener(mouseListener);
     canvasWrapper.addMouseMotionListener(mouseListener);
     canvasWrapper.addMouseWheelListener(mouseListener);
+    canvasWrapper.addMouseListener(mouseListener);
   }
 
   private class Canvas extends JPanel {
@@ -143,7 +165,6 @@ public class DocumentView extends JPanel {
 
     canvas.revalidate();
     viewport.repaint();
-
   }
 
   public void setScale(float scale) {
@@ -151,4 +172,5 @@ public class DocumentView extends JPanel {
     Rectangle viewRect = viewport.getViewRect();
     setScale(scale, new Point(viewRect.x + viewRect.width / 2, viewRect.y + viewRect.height / 2));
   }
+
 }

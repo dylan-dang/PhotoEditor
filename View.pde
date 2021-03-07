@@ -1,6 +1,7 @@
 
 public class View extends JPanel {
   public final Color CONTENT_BACKGROUND = new Color(0x282828);
+  public ColorSelector selector = new ColorSelector();
   private final JFXPanel jfxPanel = new JFXPanel();
   private final ToolAction[] toolActions = {
     new MoveAction(this),
@@ -63,7 +64,7 @@ public class View extends JPanel {
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
     splitPane.setLeftComponent(imageTabs);
-    splitPane.setRightComponent(new JTree());
+    splitPane.setRightComponent(new LayerView());
     splitPane.setResizeWeight(1.0);
     splitPane.setBackground(CONTENT_BACKGROUND);
 
@@ -99,12 +100,11 @@ public class View extends JPanel {
 
   private class ToolBar extends JToolBar {
     ToolBar() {
-      ColorSelector selector = new ColorSelector();
       addRigidSpace(8);
       add(selector);
       addRigidSpace(8);
-      ButtonGroup group = new ButtonGroup();
 
+      ButtonGroup group = new ButtonGroup();
       for (ToolAction tool: toolActions) {
         JToggleButton button = new JToggleButton(tool);
         Dimension size = new Dimension(32, 24);
@@ -115,6 +115,7 @@ public class View extends JPanel {
         group.add(button);
         add(button);
       }
+      selectedTool = toolActions[0];
       group.setSelected(group.getElements().nextElement().getModel(), true);
       //when parent changes and floating, set toolbar frame to undecorated
       //because minimum native frame width is too wide, and also looks better
@@ -158,11 +159,14 @@ public class View extends JPanel {
   public JTabbedPane getImageTabs() {
     return imageTabs;
   }
+  public Document getSelectedDocument() {
+    return ((DocumentView)imageTabs.getSelectedComponent()).getDocument();
+  }
 
   public ToolAction getSelectedTool() {
     return selectedTool;
   }
-  
+
   public void setSelectedTool(ToolAction selectedTool) {
     this.selectedTool = selectedTool;
   }
