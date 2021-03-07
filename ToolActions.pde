@@ -91,15 +91,18 @@ public class EyeDropAction extends ToolAction {
   }
   public void execute() {
     Point2D pos = dragState.getCurrent();
-    BufferedImage image = view.getSelectedDocument().getFlattenedView();
-    int c = image.getRGB((int) pos.getX(), (int) pos.getY());
-    ColorSelector selector = view.selector;
-    Set buttons = dragState.getButtons();
-    if (buttons.contains(MouseEvent.BUTTON1)) {
-      selector.setPrimary(c);
-    }
-    if (buttons.contains(MouseEvent.BUTTON3)) {
-      selector.setSecondary(c);
+    Document doc = view.getSelectedDocument();
+
+    if (new Rectangle2D.Double(0, 0, doc.getWidth(), doc.getHeight()).contains(pos)) {
+      BufferedImage samplingImage = doc.getFlattenedView();
+      int c = samplingImage.getRGB((int) pos.getX(), (int) pos.getY());
+
+      ColorSelector selector = view.selector;
+      Set buttons = dragState.getButtons();
+      if (buttons.contains(MouseEvent.BUTTON1))
+        selector.setPrimary(c);
+      if (buttons.contains(MouseEvent.BUTTON3))
+        selector.setSecondary(c);
     }
   }
 }

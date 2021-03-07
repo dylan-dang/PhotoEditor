@@ -63,6 +63,7 @@ public class DocumentView extends JPanel {
         updatePos(e);
         dragState.dragTo(pos);
         tool.execute();
+        canvas.repaint();
       }
       @Override
       void mousePressed(MouseEvent e) {
@@ -103,25 +104,24 @@ public class DocumentView extends JPanel {
   }
 
   private class Canvas extends JPanel {
-    private final BufferedImage image = document.getFlattenedView();
     @Override
     public void paintComponent(Graphics g) {
       super.paintComponent(g);
       Graphics2D g2 = (Graphics2D)g.create();
       g2.scale(scale, scale);
-      g2.drawImage(image, 0, 0, null);
+      g2.drawImage(document.getFlattenedView(), 0, 0, null);
       g2.dispose();
     }
     @Override
     public Dimension getPreferredSize() {
       return new Dimension(
-        round(image.getWidth() * scale),
-        round(image.getHeight() * scale)
+        round(document.getWidth() * scale),
+        round(document.getHeight() * scale)
       );
     }
     public boolean largerThan(Dimension container) {
-      return image.getWidth() * scale > container.getWidth() ||
-             image.getHeight() * scale > container.getHeight();
+      return document.getWidth() * scale > container.getWidth() ||
+             document.getHeight() * scale > container.getHeight();
     }
   }
 
