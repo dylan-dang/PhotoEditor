@@ -63,9 +63,26 @@ public class LayerListView extends JPanel {
 
 public class LayerView extends JToggleButton {
 	Layer layer;
+	Image thumbnail;
+	private final int MAXHEIGHT = 48;
 	LayerView(Layer layer) {
 		this.layer = layer;
-		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
-		add(new JLabel("bruh"), new ImageIcon(""));
+		setPreferredSize(new Dimension(0, MAXHEIGHT + 10));
+		updateThumbnail();
+		setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEmptyBorder(6, 6, 6, 6),
+			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY)
+		));
+		JLabel layerLabel = new JLabel("bruh");
+		layerLabel.setIcon(new ImageIcon(thumbnail));
+		add(layerLabel);
+	}
+	private void updateThumbnail() {
+		final BufferedImage img = layer.getImage();
+		final int imgHeight = img.getHeight();
+		final int imgWidth = img.getWidth();
+		final int width = imgWidth * MAXHEIGHT / imgHeight;
+		final int height = MAXHEIGHT;
+		thumbnail = img.getScaledInstance(width, height, Image.SCALE_FAST);
 	}
 }
