@@ -64,7 +64,7 @@ public class View extends JPanel {
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
     splitPane.setLeftComponent(imageTabs);
-    splitPane.setRightComponent(new LayerView());
+    splitPane.setRightComponent(new LayerListView());
     splitPane.setResizeWeight(1.0);
     splitPane.setBackground(CONTENT_BACKGROUND);
 
@@ -160,7 +160,10 @@ public class View extends JPanel {
     return imageTabs;
   }
   public Document getSelectedDocument() {
-    return ((DocumentView)imageTabs.getSelectedComponent()).getDocument();
+    return getSelectedDocumentView().getDocument();
+  }
+  public DocumentView getSelectedDocumentView() {
+    return (DocumentView)imageTabs.getSelectedComponent();
   }
 
   public ToolAction getSelectedTool() {

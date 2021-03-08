@@ -1,6 +1,15 @@
 public abstract class BlendComposite implements Composite, CompositeContext {
   protected int width, height;
   protected int[] srcPixels, dstPixels;
+  protected float opacity = 1;
+
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0, Math.min(1, opacity));
+  }
+
+  public float getOpacity() {
+    return opacity;
+  }
 
   protected void checkType(Raster raster) {
     if (raster.getSampleModel().getDataType() != DataBuffer.TYPE_INT) {
@@ -49,6 +58,7 @@ public abstract class BlendComposite implements Composite, CompositeContext {
   protected int overPixel(int src, int dst) {
     float aSrc = alpha(src);
     float aDst = alpha(dst);
+    aSrc *= opacity;
     aDst = aDst * (1 - aSrc);
 
     float a = aSrc + aDst;
@@ -56,7 +66,6 @@ public abstract class BlendComposite implements Composite, CompositeContext {
     float r = (red(src)*aSrc + red(dst)*aDst) / a;
     float g = (green(src)*aSrc + green(dst)*aDst) / a;
     float b = (blue(src)*aSrc + blue(dst)*aDst) / a;
-
     return toColor(r, g, b, a);
   }
   @Override
@@ -188,10 +197,25 @@ public class ExclusionComposite extends SeparableBlendComponent {
     return dst + src - 2*dst*src;
   }
 }
+
 public class DivideComposite extends SeparableBlendComponent {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src == 0) return 1;
     return Math.min(1, dst / src);
   }
+}
+
+public class AverageComposite extends SeparableBlendComponent {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    return (src + dst) / 2;
+  }
+}
+
+public class XORComposite extends BlendComposite {
+  @Override
+  protected int blendPixel(int src, int dst) {
+    return src ^ dst & 0xFFFFFF;
+   }
 }

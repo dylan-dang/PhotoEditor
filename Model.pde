@@ -11,6 +11,12 @@ public class Document {
     BufferedImage image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
     image = toRGBA(image);
     layers.add(new Layer(image));
+
+    try {
+      layers.add(new Layer(toRGBA(ImageIO.read(new File("C:/Users/user1/Desktop/smile.png")))));
+    } catch (IOException e) {
+      return; //TODO dialog error
+    }
   }
   Document(File file) {
     BufferedImage image;
@@ -48,9 +54,11 @@ public class Document {
     Graphics2D g2 = flattened.createGraphics();
     g2.drawImage(layers.get(0).getImage(), null, 0, 0);
     for(int i = 1; i < layers.size(); i++) {
-      BufferedImage layer = layers.get(i).getImage();
-      g2.setComposite(new NormalComposite());
-      g2.drawImage(layer, null, 0, 0);
+      Layer layer = layers.get(i);
+      if (layer.isVisible()) {
+        g2.setComposite(layer.getBlendComposite());
+        g2.drawImage(layer.getImage(), null, 0, 0);
+      }
     }
     g2.dispose();
   }
@@ -72,20 +80,26 @@ public class Document {
 public class Layer {
   BufferedImage image;
   private String name;
-  private boolean visible;
-  private int opacity;
-  //TODO blendmodes
+  private boolean visibility = true;
+  private BlendComposite blendComposite = new NormalComposite();
 
   Layer(BufferedImage image) {
     if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
       throw new IllegalStateException("Expected TYPE_INT_ARGB");
     }
     this.image = image;
-    visible = true;
-    opacity = 0xFF;
   }
 
   public BufferedImage getImage() {
     return image;
+  }
+  public BlendComposite getBlendComposite() {
+    return blendComposite;
+  }
+  public boolean isVisible() {
+    return visibility;
+  }
+  public void setVisible(boolean visibility) {
+    this.visibility = visibility;
   }
 }

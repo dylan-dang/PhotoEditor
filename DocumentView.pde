@@ -2,7 +2,7 @@ public class DocumentView extends JPanel {
   private View view;
   private Document document;
   private JPanel infoBar = new JPanel();
-  private final float[] funcTable = {2,3,4,5,6,7,8,9,10,12.5,17,20,25,33.33,50,66.67,100,150,200,300,400,500,600,800,1000,1200,1400,1600,2000,2400,3200,4000,4800,5600,6400};
+  public final float[] ZOOM_TABLE = {2,3,4,5,6,7,8,9,10,12.5,17,20,25,33.33,50,66.67,100,150,200,300,400,500,600,800,1000,1200,1400,1600,2000,2400,3200,4000,4800,5600,6400};
   private JSlider slider;
   private float scale = 1;
   private JPanel canvasWrapper = new JPanel(new GridBagLayout());
@@ -20,7 +20,14 @@ public class DocumentView extends JPanel {
     infoBar.add(Box.createGlue());
     infoBar.add(new JSpinner());
 
-    slider = new JSlider(JSlider.HORIZONTAL, 0, funcTable.length - 1, funcTable.length / 2);
+    int defaultIndex = ZOOM_TABLE.length / 2;
+    for(int i = 0; i < ZOOM_TABLE.length; i++) {
+      if (ZOOM_TABLE[i] == 100) {
+        defaultIndex = i;
+        break;
+      }
+    }
+    slider = new JSlider(JSlider.HORIZONTAL, 0, ZOOM_TABLE.length - 1, defaultIndex);
     //slider.setPaintTicks(true);
     //slider.setMajorTickSpacing(1);
     slider.setSnapToTicks(true);
@@ -28,7 +35,7 @@ public class DocumentView extends JPanel {
       public void stateChanged(ChangeEvent e) {
         JSlider source = (JSlider)e.getSource();
         if (source.getValueIsAdjusting())
-        setScale(funcTable[source.getValue()] / 100);
+        setScale(ZOOM_TABLE[source.getValue()] / 100);
       }
     });
 
@@ -50,6 +57,7 @@ public class DocumentView extends JPanel {
 
       @Override
       void mouseWheelMoved(MouseWheelEvent e) {
+        println(e.getSource() instanceof JViewport ? null : e.getPoint());
         setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64),
                  e.getSource() instanceof JViewport ? null : e.getPoint());
       }
@@ -82,6 +90,7 @@ public class DocumentView extends JPanel {
         if (dragState.getButtons().isEmpty()) {
           dragState.stop(pos);
         }
+
       }
       void updatePos(MouseEvent e) {
         Point mouse = e.getPoint();
@@ -93,6 +102,11 @@ public class DocumentView extends JPanel {
           mouse.translate(-(source.getWidth()-canvas.getWidth()) / 2, -(source.getHeight()-canvas.getHeight()) / 2);
         }
         pos.setLocation(mouse.x / scale, mouse.y / scale);
+      }
+      @Override
+      void mouseClicked(MouseEvent e) {
+        updatePos(e);
+        tool.click(pos, e.getButton());
       }
     };
     canvas.addMouseWheelListener(mouseListener);
@@ -137,7 +151,7 @@ public class DocumentView extends JPanel {
     return document;
   }
 
-  public void setScale(float scale, Point pos) {
+  public void setScale(float scale, Point2D pos) {
     if(pos == null) {
       setScale(scale);
       return;
@@ -146,18 +160,17 @@ public class DocumentView extends JPanel {
     float deltaScale = scale / this.scale;
 
     this.scale = scale;
-
     //if canvas is smaller than viewport, no need to translate the view position
     if(canvas.largerThan(viewport.getExtentSize())) {
       Point viewPos = viewport.getViewPosition();
       viewport.setViewPosition(new Point(
-        viewPos.x + round(pos.x * deltaScale) - pos.x,
-        viewPos.y + round(pos.y * deltaScale) - pos.y
+        (int)Math.round(viewPos.x + pos.getX() * deltaScale - pos.getX()),
+        (int)Math.round(viewPos.y + pos.getY() * deltaScale - pos.getY())
       ));
     }
 
     int lastTick = 0;
-    while (lastTick < funcTable.length && scale >= funcTable[lastTick] / 100) {
+    while (lastTick < ZOOM_TABLE.length && scale >= ZOOM_TABLE[lastTick] / 100) {
       lastTick++;
     }
     if (!slider.getValueIsAdjusting())

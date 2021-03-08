@@ -4,7 +4,6 @@ class DragGesture {
   private Set<Integer> buttons = new HashSet<Integer>();
   void start(Point2D start, int button) {
     last = current = this.start = start;
-    dragging = true;
     buttons.add(button);
   }
   void stop(Point2D end) {
@@ -22,6 +21,7 @@ class DragGesture {
     return end;
   }
   void dragTo(Point2D pos) {
+    dragging = true;
     last = current;
     current = pos;
   }
@@ -56,6 +56,7 @@ public abstract class ToolAction extends AbstractAction {
     return dragState;
   }
   public abstract void execute();
+  public void click(Point2D pos, int button) {}
 }
 
 public class MoveAction extends ToolAction {
@@ -106,6 +107,7 @@ public class EyeDropAction extends ToolAction {
     }
   }
 }
+
 public class BrushAction extends ToolAction {
   BrushAction(View view){
     super("brush.png", view);
@@ -114,6 +116,7 @@ public class BrushAction extends ToolAction {
 
   }
 }
+
 public class PencilAction extends ToolAction {
   PencilAction(View view){
     super("pencil.png", view);
@@ -122,6 +125,7 @@ public class PencilAction extends ToolAction {
 
   }
 }
+
 public class EraserAction extends ToolAction {
   EraserAction(View view){
     super("eraser.png", view);
@@ -130,6 +134,7 @@ public class EraserAction extends ToolAction {
 
   }
 }
+
 public class FillAction extends ToolAction {
   FillAction(View view){
     super("fill.png", view);
@@ -138,6 +143,7 @@ public class FillAction extends ToolAction {
 
   }
 }
+
 public class TextAction extends ToolAction {
   TextAction(View view){
     super("text.png", view);
@@ -146,6 +152,7 @@ public class TextAction extends ToolAction {
 
   }
 }
+
 public class PanAction extends ToolAction {
   PanAction(View view){
     super("pan.png", view);
@@ -154,11 +161,28 @@ public class PanAction extends ToolAction {
 
   }
 }
+
 public class ZoomAction extends ToolAction {
   ZoomAction(View view){
     super("zoom.png", view);
   }
   public void execute() {
+  }
+  public void click(Point2D pos, int button) {
+    DocumentView docView = view.getSelectedDocumentView();
+    final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
+    int previousIndex = 0;
+    float scale = docView.getScale();
 
+    for(int i = 0; i < ZOOM_TABLE.length; i++) {
+      if (button == MouseEvent.BUTTON1 && ZOOM_TABLE[i] <= scale * 100) {
+        previousIndex = i;
+      }
+    }
+
+    pos.setLocation(pos.getX() * scale, pos.getY() * scale);
+    if (previousIndex < ZOOM_TABLE.length - 1) {
+      docView.setScale(ZOOM_TABLE[previousIndex + 1] / 100, pos);
+    }
   }
 }

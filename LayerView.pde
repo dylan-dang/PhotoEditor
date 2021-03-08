@@ -1,8 +1,8 @@
-public class LayerView extends JPanel {
+public class LayerListView extends JPanel {
 
     private JPanel mainList;
 
-    public LayerView() {
+    public LayerListView() {
         setLayout(new BorderLayout());
 
         mainList = new JPanel(new GridBagLayout());
