@@ -1,43 +1,71 @@
-public class LayerView extends JPanel {
+public class LayerListView extends JPanel {
+	private View view;
+	private JPanel mainList;
+  JButton addLayerButton;
+  GridBagConstraints layerConstraint = new GridBagConstraints();
+  ButtonGroup layerGroup = new ButtonGroup();
 
-    private JPanel mainList;
+	public LayerListView(View view) {
+		this.view = view;
+		setLayout(new BorderLayout());
+    layerConstraint.gridwidth = GridBagConstraints.REMAINDER;
+    layerConstraint.weightx = 1;
+    layerConstraint.fill = GridBagConstraints.HORIZONTAL;
 
-    public LayerView() {
-        setLayout(new BorderLayout());
+		mainList = new JPanel(new GridBagLayout());
 
-        mainList = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        mainList.add(new JPanel(), gbc);
+		add(new JScrollPane(mainList));
 
-        add(new JScrollPane(mainList));
+		addLayerButton = new JButton("Add");
+    addLayerButton.setEnabled(false);
+    add(addLayerButton, BorderLayout.SOUTH);
+		addLayerButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+        LayerView layerView = new LayerView(null);
+        layerGroup.add(layerView);
+        mainList.add(layerView, layerConstraint, 0);
 
-        JButton add = new JButton("Add");
-        add.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JPanel panel = new JPanel();
-                panel.add(new JLabel("Hello"));
-                panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
-                GridBagConstraints gbc = new GridBagConstraints();
-                gbc.gridwidth = GridBagConstraints.REMAINDER;
-                gbc.weightx = 1;
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                mainList.add(panel, gbc, 0);
+				validate();
+				repaint();
+			}
+		});
+	}
 
-                validate();
-                repaint();
-            }
-        });
-
-        add(add, BorderLayout.SOUTH);
-
+	@Override
+	public Dimension getPreferredSize() {
+		return new Dimension(200, 200);
+	}
+	public View getView() {
+		return view;
+	}
+  public void update() {
+    mainList.removeAll();
+    GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		mainList.add(new JPanel(), gbc);
+    if (view.getSelectedDocument() != null) {
+      addLayerButton.setEnabled(true);
+      for(Layer layer: view.getSelectedDocument().getLayers()) {
+        LayerView layerView = new LayerView(layer);
+        layerGroup.add(layerView);
+        mainList.add(layerView, layerConstraint, 0);
+      }
+    } else {
+      addLayerButton.setEnabled(false);
     }
+    validate();
+    repaint();
+  }
+}
 
-    @Override
-    public Dimension getPreferredSize() {
-        return new Dimension(200, 200);
-    }
+public class LayerView extends JToggleButton {
+	Layer layer;
+	LayerView(Layer layer) {
+		this.layer = layer;
+		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
+		add(new JLabel("bruh"), new ImageIcon(""));
+	}
 }

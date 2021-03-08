@@ -61,10 +61,12 @@ public class View extends JPanel {
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
 
+    final LayerListView layerList = new LayerListView(this);
+
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
     splitPane.setLeftComponent(imageTabs);
-    splitPane.setRightComponent(new LayerView());
+    splitPane.setRightComponent(layerList);
     splitPane.setResizeWeight(1.0);
     splitPane.setBackground(CONTENT_BACKGROUND);
 
@@ -72,6 +74,7 @@ public class View extends JPanel {
       public void stateChanged(ChangeEvent e) {
         JTabbedPane source = (JTabbedPane) e.getSource();
         splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : SwingUtilities.getRootPane(source).getContentPane().getBackground());
+        layerList.update();
       }
     });
 
@@ -160,7 +163,12 @@ public class View extends JPanel {
     return imageTabs;
   }
   public Document getSelectedDocument() {
-    return ((DocumentView)imageTabs.getSelectedComponent()).getDocument();
+    DocumentView docView = getSelectedDocumentView();
+    if (docView == null) return null;
+    return docView.getDocument();
+  }
+  public DocumentView getSelectedDocumentView() {
+    return (DocumentView) imageTabs.getSelectedComponent();
   }
 
   public ToolAction getSelectedTool() {
