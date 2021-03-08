@@ -185,5 +185,8 @@ public class DocumentView extends JPanel {
     Rectangle viewRect = viewport.getViewRect();
     setScale(scale, new Point(viewRect.x + viewRect.width / 2, viewRect.y + viewRect.height / 2));
   }
+  public Layer getSelectedLayer() {
+    return null; //TODO
+  }
 
 }
