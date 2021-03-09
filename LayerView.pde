@@ -5,7 +5,7 @@ public class LayerListView extends JPanel {
   GridBagConstraints layerConstraint = new GridBagConstraints();
   ButtonGroup layerGroup = new ButtonGroup();
 
-	public LayerListView(View view) {
+	public LayerListView(final View view) {
 		this.view = view;
 		setLayout(new BorderLayout());
     layerConstraint.gridwidth = GridBagConstraints.REMAINDER;
@@ -19,10 +19,13 @@ public class LayerListView extends JPanel {
 		addLayerButton = new JButton("Add");
     addLayerButton.setEnabled(false);
     add(addLayerButton, BorderLayout.SOUTH);
+
 		addLayerButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-        LayerView layerView = new LayerView(null);
+				Document doc = view.getSelectedDocument();
+				Layer layer = doc.addLayer();
+        LayerView layerView = new LayerView(layer);
         layerGroup.add(layerView);
         mainList.add(layerView, layerConstraint, 0);
 
@@ -64,14 +67,13 @@ public class LayerListView extends JPanel {
 public class LayerView extends JToggleButton {
 	Layer layer;
 	Image thumbnail;
-	private final int MAXHEIGHT = 48;
+	private final int MAXLENGTH = 54;
 	LayerView(Layer layer) {
 		this.layer = layer;
-		setPreferredSize(new Dimension(0, MAXHEIGHT + 10));
 		updateThumbnail();
 		setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEmptyBorder(6, 6, 6, 6),
-			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY)
+			BorderFactory.createLineBorder(Color.GRAY),
+			BorderFactory.createEmptyBorder(6, 6, 6, 6)
 		));
 		JLabel layerLabel = new JLabel("bruh");
 		layerLabel.setIcon(new ImageIcon(thumbnail));
@@ -79,10 +81,28 @@ public class LayerView extends JToggleButton {
 	}
 	private void updateThumbnail() {
 		final BufferedImage img = layer.getImage();
+		int width, height;
 		final int imgHeight = img.getHeight();
 		final int imgWidth = img.getWidth();
-		final int width = imgWidth * MAXHEIGHT / imgHeight;
-		final int height = MAXHEIGHT;
-		thumbnail = img.getScaledInstance(width, height, Image.SCALE_FAST);
+		if (imgHeight > imgWidth) {
+			width = imgWidth * MAXLENGTH / imgHeight;
+			height = MAXLENGTH;
+		} else {
+			width = MAXLENGTH;
+			height = imgHeight * MAXLENGTH / imgWidth;
+		}
+		BufferedImage thumb = new BufferedImage(width + 2, height + 2, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g = thumb.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+		g.setColor(Color.white);
+		g.fillRect(1, 1, width, height);
+		g.setColor(DrawHelper.CHECKER);
+		DrawHelper.drawChecker(g, 1, 1, width, height, 5);
+		g.setColor(Color.gray);
+		g.drawRect(0, 0, width + 1, height + 1);
+		g.drawImage(img, 1, 1, width, height, null);
+		g.dispose();
+		thumbnail = thumb;
 	}
+
 }

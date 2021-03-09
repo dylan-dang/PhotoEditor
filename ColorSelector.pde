@@ -42,14 +42,17 @@ class ColorSelector extends JPanel {
     final Color foreground = new Color(0xADADAD);
     //color squares
     Graphics2D g2 = (Graphics2D) g;
-    drawColorArea(g2, secondaryArea, Color.black, Color.white, secondary.getColor());
-    drawColorArea(g2, primaryArea,  Color.black, Color.white, primary.getColor());
+
+    DrawHelper.drawChecker(g2, secondaryArea.x + 2, secondaryArea.y + 2, secondaryArea.width - 3, secondaryArea.height - 3, 4);
+    DrawHelper.drawBorderedArea(g2, secondaryArea, Color.black, Color.white, secondary.getColor());
+    DrawHelper.drawChecker(g2, primaryArea.x + 2, primaryArea.y + 2, primaryArea.width - 3, primaryArea.height - 3, 4);
+    DrawHelper.drawBorderedArea(g2, primaryArea,  Color.black, Color.white, primary.getColor());
 
     g2.scale((double)getPreferredSize().width / 32d, (double)getPreferredSize().height / 32d);
 
     //default
-    drawColorArea(g2, new Rectangle(3, 24, 7, 7), foreground, Color.white);
-    drawColorArea(g2, new Rectangle(0, 21, 7, 7), foreground, Color.black);
+    DrawHelper.drawBorderedArea(g2, new Rectangle(3, 24, 7, 7), foreground, Color.white);
+    DrawHelper.drawBorderedArea(g2, new Rectangle(0, 21, 7, 7), foreground, Color.black);
 
     g.setColor(foreground);
     Polygon arrows = new Polygon(new int[] {28, 23, 23, 21, 23, 23, 28, 28, 26, 28, 30, 28, 28},
@@ -59,15 +62,6 @@ class ColorSelector extends JPanel {
     g.fillPolygon(arrows);
     g.drawPolygon(arrows);
     g2.dispose();
-  }
-
-  private void drawColorArea(Graphics2D g, Rectangle area, Color... fill) {
-    area = (Rectangle) area.clone();
-    for (Color c: fill) {
-      g.setPaint(c);
-      g.fill(area);
-      area.grow(-1, -1);
-    }
   }
 
   @Override

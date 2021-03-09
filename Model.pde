@@ -75,6 +75,11 @@ public class Document {
   public int getWidth() {
     return width;
   }
+  public Layer addLayer() {
+    Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
+    layers.add(layer);
+    return layer;
+  }
 }
 
 public class Layer {
