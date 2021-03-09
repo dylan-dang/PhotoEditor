@@ -24,7 +24,7 @@ public abstract class BlendComposite implements Composite, CompositeContext {
 
     int width = Math.min(src.getWidth(), dstIn.getWidth());
     int height = Math.min(src.getHeight(), dstIn.getHeight());
-    int[] srcPixels = ((DataBufferInt)src.getDataBuffer()).getData();
+    int[] srcPixels = ((DataBufferInt)src.getDataBuffer()).getData().clone();
     int[] dstPixels = ((DataBufferInt)dstIn.getDataBuffer()).getData();
 
     for (int i = 0; i < dstPixels.length; i++) {

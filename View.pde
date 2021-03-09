@@ -1,9 +1,8 @@
 
 public class View extends JPanel {
   public final Color CONTENT_BACKGROUND = new Color(0x282828);
-  public ColorSelector selector = new ColorSelector();
-  private final JFXPanel jfxPanel = new JFXPanel();
-  private final ToolAction[] toolActions = {
+  private final JFXPanel JFXPANEL = new JFXPanel();
+  private ToolBar toolBar = new ToolBar(new ToolAction[] {
     new MoveAction(this),
     new SelectAction(this),
     new CropAction(this),
@@ -15,12 +14,11 @@ public class View extends JPanel {
     new TextAction(this),
     new PanAction(this),
     new ZoomAction(this)
-  };
-
+  });
   private JFrame frame;
   private JTabbedPane imageTabs;
   private JMenuBar menuBar = new JMenuBar();
-  private ToolAction selectedTool;
+  private ToolOptions toolOptions = new ToolOptions();
 
   View(final JFrame frame) {
     //set the frame for the view to hook into
@@ -34,7 +32,6 @@ public class View extends JPanel {
   }
 
   private View initView() {
-    setLayout(new BorderLayout());
     //setup menubar
     addMenuActions(new JMenu("File"), new MenuBarAction[] {
       new NewFileAction(this),
@@ -56,7 +53,9 @@ public class View extends JPanel {
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
     frame.setJMenuBar(menuBar);
 
-    add(new ToolBar(), BorderLayout.WEST);
+    setLayout(new MultiBorderLayout());
+    add(toolBar, BorderLayout.WEST);
+    add(toolOptions, BorderLayout.NORTH);
 
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
@@ -111,53 +110,6 @@ public class View extends JPanel {
     }
   }
 
-  private class ToolBar extends JToolBar {
-    ToolBar() {
-      addRigidSpace(8);
-      add(selector);
-      addRigidSpace(8);
-
-      ButtonGroup group = new ButtonGroup();
-      for (ToolAction tool: toolActions) {
-        JToggleButton button = new JToggleButton(tool);
-        Dimension size = new Dimension(32, 24);
-        button.setPreferredSize(size);
-        button.setMaximumSize(size);
-        button.setMinimumSize(size);
-        button.setAlignmentX(CENTER_ALIGNMENT);
-        group.add(button);
-        add(button);
-      }
-      selectedTool = toolActions[0];
-      group.setSelected(group.getElements().nextElement().getModel(), true);
-      //when parent changes and floating, set toolbar frame to undecorated
-      //because minimum native frame width is too wide, and also looks better
-      addHierarchyListener(new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-            JToolBar toolbar = (JToolBar) e.getComponent();
-            if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) == 0) return;
-            if (!((BasicToolBarUI) toolbar.getUI()).isFloating()) return;
-            Window window = SwingUtilities.windowForComponent(toolbar);
-            if(window == null) return;
-            window.dispose();
-            ((JDialog) window).setUndecorated(true);
-            window.setVisible(true);
-        }
-      });
-      //add border to stand out
-      setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(new Color(0x2B2B2B)),
-        getBorder()
-      ));
-      setOrientation(JToolBar.VERTICAL);
-    }
-
-    private void addRigidSpace(int length) {
-      add(Box.createRigidArea(new Dimension(length, length)));
-    }
-  }
-
   public JFrame getFrame() {
     return this.frame;
   }
@@ -182,15 +134,12 @@ public class View extends JPanel {
     return (DocumentView) imageTabs.getSelectedComponent();
   }
 
-  public ToolAction getSelectedTool() {
-    return selectedTool;
-  }
-
-  public void setSelectedTool(ToolAction selectedTool) {
-    this.selectedTool = selectedTool;
-  }
   public boolean hasSelectedDocument() {
     if (imageTabs == null) return false;
     return imageTabs.getSelectedComponent() != null;
+  }
+
+  public ToolBar getToolBar() {
+    return toolBar;
   }
 }

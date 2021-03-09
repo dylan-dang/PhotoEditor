@@ -9,6 +9,7 @@ public class DocumentView extends JPanel {
   private Canvas canvas;
   private JScrollPane scrollPane = new JScrollPane();
   private JViewport viewport = scrollPane.getViewport();
+  private Layer selectedLayer;
 
   DocumentView(Document document, View view) {
     this.document = document;
@@ -28,8 +29,6 @@ public class DocumentView extends JPanel {
       }
     }
     slider = new JSlider(JSlider.HORIZONTAL, 0, ZOOM_TABLE.length - 1, defaultIndex);
-    //slider.setPaintTicks(true);
-    //slider.setMajorTickSpacing(1);
     slider.setSnapToTicks(true);
     slider.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -54,12 +53,11 @@ public class DocumentView extends JPanel {
       Point2D pos = new Point2D.Double(0, 0);
       ToolAction tool;
       DragGesture dragState;
+      Point origin;
 
       @Override
       void mouseWheelMoved(MouseWheelEvent e) {
-        println(e.getSource() instanceof JViewport ? null : e.getPoint());
-        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64),
-                 e.getSource() instanceof JViewport ? null : e.getPoint());
+        setScale(constrain(scale * pow(1.1, -e.getWheelRotation()), .01, 64), e.getPoint());
       }
       @Override
       void mouseMoved(MouseEvent e) {
@@ -75,6 +73,7 @@ public class DocumentView extends JPanel {
       }
       @Override
       void mousePressed(MouseEvent e) {
+        origin = e.getPoint();
         updatePos(e);
         if (!dragState.isDragging()) {
           dragState.start(pos, e.getButton());
@@ -94,7 +93,7 @@ public class DocumentView extends JPanel {
       }
       void updatePos(MouseEvent e) {
         Point mouse = e.getPoint();
-        tool = finalView.getSelectedTool();
+        tool = finalView.getToolBar().getSelectedTool();
         dragState = tool.getDragState();
         JComponent source = (JComponent)e.getSource();
         if(source.getLayout() instanceof GridBagLayout) { //wrapper
@@ -186,7 +185,12 @@ public class DocumentView extends JPanel {
     setScale(scale, new Point(viewRect.x + viewRect.width / 2, viewRect.y + viewRect.height / 2));
   }
   public Layer getSelectedLayer() {
-    return null; //TODO
+    return selectedLayer;
   }
-
+  public void setSelectedLayer(Layer layer) {
+    selectedLayer = layer;
+  }
+  public JViewport getViewport() {
+    return viewport;
+  }
 }

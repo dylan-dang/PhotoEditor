@@ -99,19 +99,27 @@ public class OpenFileAction extends MenuBarAction {
 }
 
 public class SaveAction extends MenuBarAction {
-  public SaveAction(View view) {
+  private Document document;
+  public SaveAction(View view, Document document) {
     super(view, "Save", "ctrl S");
+    this.document = document;
   }
-
+  public SaveAction(View view) {
+    this(view, null);
+  }
   @Override
   public void actionPerformed(ActionEvent e) {
-    //TODO create action
   }
 }
 
 public class SaveAsAction extends MenuBarAction {
-  public SaveAsAction(View view) {
+  private Document document;
+  public SaveAsAction(View view, Document document) {
     super(view, "Save As...", "ctrl shift S");
+    this.document = document;
+  }
+  public SaveAsAction(View view) {
+    this(view, null);
   }
 
   @Override
@@ -146,7 +154,7 @@ public class CloseFileAction extends MenuBarAction {
         "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
       switch(response) {
         case CANCEL: return;
-        case SAVE: new SaveAction(view).execute();
+        case SAVE: new SaveAction(view, docView.getDocument()).execute();
       }
     } else {response = SAVE;}
     imageTabs.remove(i);

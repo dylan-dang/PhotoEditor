@@ -13,10 +13,7 @@ public static class DrawHelper {
       }
     }
   }
-<<<<<<< HEAD
 
-=======
->>>>>>> 23be06152e05a10f638104dfe555a42adabb9b9d
   public static void drawBorderedArea(Graphics2D g, Rectangle area, Color... fill) {
     area = (Rectangle) area.clone();
     area.width--;

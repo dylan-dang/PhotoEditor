@@ -2,8 +2,9 @@ public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
   private String name = "Untitled";
-  private boolean isSaved = false;
+  private boolean isSaved = true;
   private BufferedImage flattened;
+  private File linkedFile;
 
   Document(int width, int height) {
     this.width = 1601;
@@ -19,6 +20,7 @@ public class Document {
     }
   }
   Document(File file) {
+    linkedFile = file;
     BufferedImage image;
     try {
       image = ImageIO.read(file);
@@ -54,7 +56,7 @@ public class Document {
     Graphics2D g2 = flattened.createGraphics();
     g2.drawImage(layers.get(0).getImage(), null, 0, 0);
     for(int i = 1; i < layers.size(); i++) {
-      Layer layer = layers.get(i);
+      final Layer layer = layers.get(i);
       if (layer.isVisible()) {
         g2.setComposite(layer.getBlendComposite());
         g2.drawImage(layer.getImage(), null, 0, 0);
@@ -75,10 +77,13 @@ public class Document {
   public int getWidth() {
     return width;
   }
-  public Layer addLayer() {
+  public Layer addLayer(int index) {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
-    layers.add(layer);
+    layers.add(index, layer);
     return layer;
+  }
+  public Layer addLayer() {
+    return addLayer(layers.size());
   }
 }
 
