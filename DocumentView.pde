@@ -70,7 +70,7 @@ public class DocumentView extends JPanel {
       void mouseDragged(MouseEvent e) {
         updatePos(e);
         dragState.dragTo(pos);
-        tool.execute();
+        tool.dragging();
         canvas.repaint();
       }
       @Override
@@ -81,7 +81,7 @@ public class DocumentView extends JPanel {
         } else {
           dragState.pressButton(e.getButton());
         }
-        tool.execute();
+        tool.dragging();
       }
       @Override
       void mouseReleased(MouseEvent e) {

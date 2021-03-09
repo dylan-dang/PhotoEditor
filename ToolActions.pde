@@ -55,7 +55,7 @@ public abstract class ToolAction extends AbstractAction {
   public DragGesture getDragState() {
     return dragState;
   }
-  public abstract void execute();
+  public abstract void dragging();
   public void click(Point2D pos, int button) {}
 }
 
@@ -63,7 +63,7 @@ public class MoveAction extends ToolAction {
   MoveAction(View view) {
     super("move.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -72,7 +72,7 @@ public class SelectAction extends ToolAction {
   SelectAction(View view) {
     super("select.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -81,7 +81,7 @@ public class CropAction extends ToolAction {
   CropAction(View view) {
     super("crop.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -90,7 +90,7 @@ public class EyeDropAction extends ToolAction {
   EyeDropAction(View view){
     super("eyedrop.png", view);
   }
-  public void execute() {
+  public void dragging() {
     Point2D pos = dragState.getCurrent();
     Document doc = view.getSelectedDocument();
 
@@ -112,7 +112,7 @@ public class BrushAction extends ToolAction {
   BrushAction(View view){
     super("brush.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -121,7 +121,7 @@ public class PencilAction extends ToolAction {
   PencilAction(View view){
     super("pencil.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -130,7 +130,7 @@ public class EraserAction extends ToolAction {
   EraserAction(View view){
     super("eraser.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -139,7 +139,7 @@ public class FillAction extends ToolAction {
   FillAction(View view){
     super("fill.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -148,7 +148,7 @@ public class TextAction extends ToolAction {
   TextAction(View view){
     super("text.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -157,7 +157,7 @@ public class PanAction extends ToolAction {
   PanAction(View view){
     super("pan.png", view);
   }
-  public void execute() {
+  public void dragging() {
 
   }
 }
@@ -166,7 +166,7 @@ public class ZoomAction extends ToolAction {
   ZoomAction(View view){
     super("zoom.png", view);
   }
-  public void execute() {
+  public void dragging() {
   }
   public void click(Point2D pos, int button) {
     DocumentView docView = view.getSelectedDocumentView();

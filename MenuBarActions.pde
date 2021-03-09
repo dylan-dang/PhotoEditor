@@ -59,7 +59,6 @@ private abstract class MenuBarAction extends AbstractAction {
   }
   @Override
   public boolean isEnabled() {
-    setEnabled(view.hasSelectedDocument());
     return view.hasSelectedDocument();
   }
 }
