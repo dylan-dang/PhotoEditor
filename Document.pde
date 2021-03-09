@@ -1,5 +1,5 @@
 public class Document {
-  private final BlendComposite DEFAULT_BLEND = new NormalComposite();
+  public final BlendComposite DEFAULT_BLEND = new NormalComposite();
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
   private String name = "Untitled";

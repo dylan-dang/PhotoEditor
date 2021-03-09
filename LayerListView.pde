@@ -4,6 +4,37 @@ public class LayerListView extends JPanel {
   private JButton addLayerButton;
   private GridBagConstraints layerConstraint = new GridBagConstraints();
   private ButtonGroup layerGroup = new ButtonGroup();
+  private JComboBox blendComboBox;
+  private JSlider opacitySlider;
+  private JSpinner opacitySpinner;
+  public final BlendComposite[] blendModes = new BlendComposite[] {
+    new NormalComposite(),
+    null,
+    new DarkenComposite(),
+    new MultiplyComposite(),
+    new ColorBurnComposite(),
+    new AdditiveComposite(),
+    null,
+    new LightenComposite(),
+    new ScreenComposite(),
+    new ColorDodgeComposite(),
+    new SubtractiveComposite(),
+    null,
+    new OverlayComposite(),
+    new SoftLightComposite(),
+    new HardLightComposite(),
+    new VividLightComposite(),
+    new LinearLightComposite(),
+    new PinLightComposite(),
+    new HardMixComposite(),
+    null,
+    new DifferenceComposite(),
+    new ExclusionComposite(),
+    null,
+    new XorComposite(),
+    new AndComposite(),
+    new OrComposite()
+  };
 
   public LayerListView(final View view) {
     this.view = view;
@@ -14,38 +45,10 @@ public class LayerListView extends JPanel {
 
     mainList = new JPanel(new GridBagLayout());
 
-    BlendComposite[] blendModes = new BlendComposite[] {
-      new NormalComposite(),
-      null,
-      new DarkenComposite(),
-      new MultiplyComposite(),
-      new ColorBurnComposite(),
-      new AdditiveComposite(),
-      null,
-      new LightenComposite(),
-      new ScreenComposite(),
-      new ColorDodgeComposite(),
-      new SubtractiveComposite(),
-      null,
-      new OverlayComposite(),
-      new SoftLightComposite(),
-      new HardLightComposite(),
-      new VividLightComposite(),
-      new LinearLightComposite(),
-      new PinLightComposite(),
-      new HardMixComposite(),
-      null,
-      new DifferenceComposite(),
-      new ExclusionComposite(),
-      null,
-      new XorComposite(),
-      new AndComposite(),
-      new OrComposite()
-    };
 		JPanel blendProperty = new JPanel();
 		blendProperty.setLayout(new BoxLayout(blendProperty, BoxLayout.X_AXIS));
 		blendProperty.add(new JLabel("Blend Mode:   "));
-    JComboBox blendComboBox = new JComboBox(blendModes) {
+    blendComboBox = new JComboBox(blendModes) {
       @Override
       public void setSelectedItem(Object item) {
         if (item == null) return;
@@ -63,7 +66,7 @@ public class LayerListView extends JPanel {
         JComboBox combo = (JComboBox) e.getSource();
 				DocumentView docView = view.getSelectedDocumentView();
 				Document doc = docView.getDocument();
-				doc.getLayers().get(1).setBlendComposite((BlendComposite)combo.getSelectedItem()); //TODO get selected layer
+				docView.getSelectedLayer().setBlendComposite((BlendComposite)combo.getSelectedItem()); //TODO get selected layer
 				doc.updateFlattenedView();
 				docView.repaint();
       }
@@ -74,10 +77,10 @@ public class LayerListView extends JPanel {
     JPanel opacityProperty = new JPanel();
     opacityProperty.setLayout(new BoxLayout(opacityProperty, BoxLayout.X_AXIS));
     opacityProperty.add(new JLabel("Opacity:"));
-    JSlider opacitySlider= new JSlider(JSlider.HORIZONTAL, 0, 255, 255);
+    opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 255);
     opacitySlider.setSnapToTicks(true);
 
-    JSpinner opacitySpinner = new JSpinner(new SpinnerNumberModel(100d, 0d, 100.1d, 100d/255d));
+    opacitySpinner = new JSpinner(new SpinnerNumberModel(100d, 0d, 100.1d, 100d/255d));
     //((JSpinner.DefaultEditor) opacitySpinner.getEditor()).getTextField().setColumns(1);
     opacitySpinner.setMinimumSize(new Dimension(72, 22));
     opacitySpinner.setMaximumSize(new Dimension(72, 22));
@@ -102,13 +105,13 @@ public class LayerListView extends JPanel {
     addLayerButton = new JButton("Add");
     addLayerButton.setEnabled(false);
     add(addLayerButton, BorderLayout.SOUTH);
-
+    final LayerListView thisLayerListView = this;
     addLayerButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         Document doc = view.getSelectedDocument();
         Layer layer = doc.addLayer();
-        LayerView layerView = new LayerView(layer);
+        LayerView layerView = new LayerView(thisLayerListView, layer);
         layerGroup.add(layerView);
         mainList.add(layerView, layerConstraint, 0);
 
@@ -135,9 +138,12 @@ public class LayerListView extends JPanel {
     if (view.getSelectedDocument() != null) {
       addLayerButton.setEnabled(true);
       for(Layer layer: view.getSelectedDocument().getLayers()) {
-        LayerView layerView = new LayerView(layer);
+        LayerView layerView = new LayerView(this, layer);
         layerGroup.add(layerView);
         mainList.add(layerView, layerConstraint, 0);
+        if (layer == view.getSelectedDocumentView().getSelectedLayer()) {
+          layerView.setSelected(true);
+        }
       }
     } else {
       addLayerButton.setEnabled(false);
@@ -145,22 +151,35 @@ public class LayerListView extends JPanel {
     validate();
     repaint();
   }
+  public void updateProperties() {
+    println("start");
+    BlendComposite blend = view.getSelectedDocumentView().getSelectedLayer().getBlendComposite();
+    if (blend == null) {
+      blendComboBox.setSelectedItem(blendModes[0]);
+      return;
+    };
+    blendComboBox.setSelectedItem(blend);
+    println("end");
+  }
 }
 
-public class LayerView extends JToggleButton {
+public class LayerView extends JToggleButton implements ActionListener {
+  LayerListView parent;
   Layer layer;
   Image thumbnail;
   private final int MAXLENGTH = 54;
-  LayerView(Layer layer) {
+  LayerView(LayerListView parent, Layer layer) {
+    this.parent = parent;
     this.layer = layer;
     updateThumbnail();
     setBorder(BorderFactory.createCompoundBorder(
-      BorderFactory.createMatteBorder(1, 1, 0, 1, Color.GRAY),
+      BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY),
       BorderFactory.createEmptyBorder(6, 6, 6, 6)
     ));
     JLabel layerLabel = new JLabel("bruh");
     layerLabel.setIcon(new ImageIcon(thumbnail));
     add(layerLabel);
+    addActionListener(this);
   }
   private void updateThumbnail() {
     final BufferedImage img = layer.getImage();
@@ -187,7 +206,11 @@ public class LayerView extends JToggleButton {
     g.dispose();
     thumbnail = thumb;
   }
-
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    parent.getView().getSelectedDocumentView().setSelectedLayer(layer);
+    parent.updateProperties();
+  }
 }
 
 class ComboBoxRenderer extends JLabel implements ListCellRenderer {

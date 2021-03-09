@@ -13,6 +13,7 @@ public class DocumentView extends JPanel {
 
   DocumentView(Document document, View view) {
     this.document = document;
+    this.selectedLayer = document.getLayers().get(0);
     this.view = view;
     setLayout(new BorderLayout());
     canvasWrapper.add(canvas = new Canvas());
