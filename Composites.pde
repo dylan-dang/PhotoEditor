@@ -1,10 +1,15 @@
+
 public abstract class BlendComposite implements Composite, CompositeContext {
   protected int width, height;
   protected int[] srcPixels, dstPixels;
   protected float opacity = 1;
 
+  protected float clamp(float value) {
+    return Math.max(0, Math.min(1, value));
+  }
+
   public void setOpacity(float opacity) {
-    this.opacity = Math.max(0, Math.min(1, opacity));
+    this.opacity = clamp(opacity);
   }
 
   public float getOpacity() {
@@ -79,12 +84,12 @@ public abstract class BlendComposite implements Composite, CompositeContext {
   protected abstract int blendPixel(int src, int dst);
 }
 
-public abstract class SeparableBlendComponent extends BlendComposite {
+public abstract class SeparableBlendComposite extends BlendComposite {
   @Override
   protected int blendPixel(int src, int dst) {
-    float r = blendChannel(red(src), red(dst));
-    float g = blendChannel(green(src), green(dst));
-    float b = blendChannel(blue(src), blue(dst));
+    float r = clamp(blendChannel(red(src), red(dst)));
+    float g = clamp(blendChannel(green(src), green(dst)));
+    float b = clamp(blendChannel(blue(src), blue(dst)));
     float a = alpha(src);
 
     return toColor(r, g, b, a);
@@ -97,80 +102,128 @@ public class NormalComposite extends BlendComposite {
   protected int blendPixel(int src, int dst) {
     return src;
   }
+  @Override
+  public String toString() {
+    return "Normal";
+  }
 }
 
-public class MultiplyComposite extends SeparableBlendComponent {
+public class MultiplyComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return src * dst;
   }
+  @Override
+  public String toString() {
+    return "Multiply";
+  }
 }
 
-public class ScreenComposite extends SeparableBlendComponent {
+public class ScreenComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return dst - src - dst*src;
   }
+  @Override
+  public String toString() {
+    return "Screen";
+  }
 }
 
-public class Overlay extends SeparableBlendComponent {
+public class OverlayComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (dst <= 0.5)
       return src * dst * 2; //multiply
-    dst = 2 * dst - 1;
-    return src - dst - dst*src; //screen
+    return 1 - 2 * (1 - src) * (1 - dst); //screen
+  }
+  @Override
+  public String toString() {
+    return "Overlay";
   }
 }
 
-public class DarkenComposite extends SeparableBlendComponent {
+public class DarkenComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return Math.min(src, dst);
   }
+  @Override
+  public String toString() {
+    return "Darken";
+  }
 }
 
-public class LightenComposite extends SeparableBlendComponent {
+public class LightenComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return Math.max(src, dst);
   }
-}
-
-public class AdditiveComposite extends SeparableBlendComponent {
   @Override
-  protected float blendChannel(float src, float dst) {
-    return Math.min(src + dst, 1);
+  public String toString() {
+    return "Lighten";
   }
 }
 
-public class ColorDodgeComposite extends SeparableBlendComponent {
+public class AdditiveComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    return src + dst;
+  }
+  @Override
+  public String toString() {
+    return "Additive (Linear Dodge)";
+  }
+}
+public class SubtractiveComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    return src + dst - 1;
+  }
+  @Override
+  public String toString() {
+    return "Subtractive (Linear Burn)";
+  }
+}
+
+public class ColorDodgeComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src >= 1) return 1;
     return Math.min(1, dst / (1 - src));
   }
+  @Override
+  public String toString() {
+    return "Color Dodge";
+  }
 }
 
-public class ColorBurnComposite extends SeparableBlendComponent {
+public class ColorBurnComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src <= 0) return 0;
     return 1 - Math.min(1, (1 - dst) / src);
   }
+  @Override
+  public String toString() {
+    return "Color Burn";
+  }
 }
 
-public class HardLightComposite extends SeparableBlendComponent {
+public class HardLightComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src <= 0.5)
       return dst * src * 2; //multiply
-    src = 2 * src - 1;
-    return dst - src - dst*src; //screen
+    return 1 - 2 * (1 - src) * (1 - dst); //screen
+  }
+  @Override
+  public String toString() {
+    return "Hard Light";
   }
 }
 
-public class SoftLightComposite extends SeparableBlendComponent {
+public class SoftLightComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src <= 0.5)
@@ -182,40 +235,125 @@ public class SoftLightComposite extends SeparableBlendComponent {
       return ((16*x - 12) * x + 4) * x;
     return (float)Math.sqrt(x);
   }
+  @Override
+  public String toString() {
+    return "Soft Light";
+  }
 }
 
-public class DifferenceComposite extends SeparableBlendComponent {
+public class VividLightComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    if (src <= 0.5)
+      return 1 - (1 - dst) / (2 * src);
+    return dst / (2 * (1 - src));
+  }
+  @Override
+  public String toString() {
+    return "Vivid Light";
+  }
+}
+
+public class LinearLightComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    return dst + 2 * src - 1;
+  }
+  @Override
+  public String toString() {
+    return "Linear Light";
+  }
+}
+
+public class PinLightComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    if (dst < 2 * src - 1)
+      return 2 * src - 1;
+    if (dst < 2 * src)
+      return dst;
+    return 2 * src;
+  }
+  @Override
+  public String toString() {
+    return "Pin Light";
+  }
+}
+
+public class HardMixComposite extends SeparableBlendComposite {
+  @Override
+  protected float blendChannel(float src, float dst) {
+    if (src < 1 - dst) return 0;
+    return 1;
+  }
+  @Override
+  public String toString() {
+    return "Hard Mix";
+  }
+}
+
+public class DifferenceComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return Math.abs(dst - src);
   }
+  @Override
+  public String toString() {
+    return "Difference";
+  }
 }
 
-public class ExclusionComposite extends SeparableBlendComponent {
+public class ExclusionComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     return dst + src - 2*dst*src;
   }
+  @Override
+  public String toString() {
+    return "Exclusion";
+  }
 }
 
-public class DivideComposite extends SeparableBlendComponent {
+public class DivideComposite extends SeparableBlendComposite {
   @Override
   protected float blendChannel(float src, float dst) {
     if (src == 0) return 1;
     return Math.min(1, dst / src);
   }
-}
-
-public class AverageComposite extends SeparableBlendComponent {
   @Override
-  protected float blendChannel(float src, float dst) {
-    return (src + dst) / 2;
+  public String toString() {
+    return "Divide";
   }
 }
 
-public class XORComposite extends BlendComposite {
+public class XorComposite extends BlendComposite {
   @Override
   protected int blendPixel(int src, int dst) {
     return src ^ dst & 0xFFFFFF;
-   }
+  }
+  @Override
+  public String toString() {
+    return "Xor";
+  }
+}
+
+public class AndComposite extends BlendComposite {
+  @Override
+  protected int blendPixel(int src, int dst) {
+    return dst & 0xFFFFFF & src;
+  }
+  @Override
+  public String toString() {
+    return "And";
+  }
+}
+public class OrComposite extends BlendComposite {
+  @Override
+  protected int blendPixel(int src, int dst) {
+    return src | dst & 0xFFFFFF;
+  }
+  @Override
+  public String toString() {
+    return "Or";
+  }
 }

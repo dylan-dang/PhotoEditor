@@ -1,4 +1,5 @@
 public class Document {
+  private final BlendComposite DEFAULT_BLEND = new NormalComposite();
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
   private String name = "Untitled";
@@ -58,7 +59,10 @@ public class Document {
     for(int i = 1; i < layers.size(); i++) {
       final Layer layer = layers.get(i);
       if (layer.isVisible()) {
-        g2.setComposite(layer.getBlendComposite());
+        BlendComposite blendComposite = layer.getBlendComposite();
+        if (blendComposite == null) blendComposite = DEFAULT_BLEND;
+        blendComposite.setOpacity(layer.getOpacity());
+        g2.setComposite(blendComposite);
         g2.drawImage(layer.getImage(), null, 0, 0);
       }
     }
@@ -91,7 +95,8 @@ public class Layer {
   BufferedImage image;
   private String name;
   private boolean visibility = true;
-  private BlendComposite blendComposite = new NormalComposite();
+  private float opacity = 1f;
+  private BlendComposite blendComposite;
 
   Layer(BufferedImage image) {
     if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
@@ -106,10 +111,19 @@ public class Layer {
   public BlendComposite getBlendComposite() {
     return blendComposite;
   }
+  public void setBlendComposite(BlendComposite blendComposite) {
+    this.blendComposite = blendComposite;
+  }
   public boolean isVisible() {
     return visibility;
   }
   public void setVisible(boolean visibility) {
     this.visibility = visibility;
+  }
+  public float getOpacity() {
+    return opacity;
+  }
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0, Math.min(1, opacity));
   }
 }

@@ -20,9 +20,11 @@ void setup() {
 
   //hook into Processing frame and setup
   size(800, 600);
+  System.setProperty("apple.laf.useScreenMenuBar", "true");
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame();
   frame.setTitle("Photo Editor");
   frame.setResizable(true);
+
   View view = new View(frame);
 
   //temporary icon
