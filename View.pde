@@ -92,11 +92,21 @@ public class View extends JPanel {
 
   private void addMenuActions(JMenu menu, MenuBarAction[] actions) {
     menuBar.add(menu);
+
     for(MenuBarAction action: actions) {
       if (action == null) {
         menu.addSeparator();
       } else {
-        menu.add(action);
+        menu.add(new JMenuItem(action) {
+          @Override
+          public boolean isEnabled() {
+            if (getAction() == null) return super.isEnabled();
+            boolean enabled = getAction().isEnabled();
+            if (enabled == false) setArmed(false);
+            getModel().setEnabled(enabled);
+            return enabled;
+          }
+        });
       }
     }
   }
@@ -168,6 +178,7 @@ public class View extends JPanel {
     return docView.getDocument();
   }
   public DocumentView getSelectedDocumentView() {
+    if (imageTabs == null) return null;
     return (DocumentView) imageTabs.getSelectedComponent();
   }
 
@@ -177,5 +188,9 @@ public class View extends JPanel {
 
   public void setSelectedTool(ToolAction selectedTool) {
     this.selectedTool = selectedTool;
+  }
+  public boolean hasSelectedDocument() {
+    if (imageTabs == null) return false;
+    return imageTabs.getSelectedComponent() != null;
   }
 }

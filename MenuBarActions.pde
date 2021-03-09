@@ -1,3 +1,11 @@
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+
+
 //Super Menu bar action
 private abstract class MenuBarAction extends AbstractAction {
   View view;
@@ -49,6 +57,11 @@ private abstract class MenuBarAction extends AbstractAction {
       return file;
     }
   }
+  @Override
+  public boolean isEnabled() {
+    setEnabled(view.hasSelectedDocument());
+    return view.hasSelectedDocument();
+  }
 }
 
 //File Menu Actions
@@ -61,6 +74,10 @@ public class NewFileAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     view.addDocument(new Document(800, 600));
+  }
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }
 
@@ -75,6 +92,10 @@ public class OpenFileAction extends MenuBarAction {
   public void actionPerformed(ActionEvent e) {
     File file = super.promptFile(true);
     if (file != null) view.addDocument(new Document(file));
+  }
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }
 
@@ -122,7 +143,7 @@ public class CloseFileAction extends MenuBarAction {
     DocumentView docView = (DocumentView) imageTabs.getComponentAt(i);
     if (!docView.getDocument().isSaved()) {
       response = JOptionPane.showOptionDialog(view.getFrame(),
-        String.format("Save changes to %s before closing?", docView.getDocument().getName()),
+        String.format("Save changes to \"%s\" before closing?", docView.getDocument().getName()),
         "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
       switch(response) {
         case CANCEL: return;
@@ -143,11 +164,11 @@ public class CloseAllAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    final int tabCount = view.getImageTabs().getTabCount();
-    for(int i = 0; i < tabCount; i++) {
-      int lastTab = tabCount - i - 1;
-      view.getImageTabs().setSelectedIndex(lastTab);
-      CloseFileAction closeFileAction = new CloseFileAction(view, lastTab);
+    final JTabbedPane imageTabs = view.getImageTabs();
+    final int tabCount = imageTabs.getTabCount();
+    for(int i = tabCount - 1; i >= 0; i--) {
+      imageTabs.setSelectedIndex(i);
+      CloseFileAction closeFileAction = new CloseFileAction(view, i);
       closeFileAction.execute();
       if (!closeFileAction.getSuccess()) {
         break;
@@ -163,18 +184,82 @@ public class CloseOtherAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    //TODO create action
+    final JTabbedPane imageTabs = view.getImageTabs();
+    final int tabCount = imageTabs.getTabCount();
+    final int selected = imageTabs.getSelectedIndex();
+    for(int i = tabCount - 1; i >= 0; i--) {
+      if (i == selected) continue;
+      imageTabs.setSelectedIndex(i);
+      CloseFileAction closeFileAction = new CloseFileAction(view, i);
+      closeFileAction.execute();
+      if (!closeFileAction.getSuccess()) {
+        break;
+      }
+    }
+  }
+  @Override
+  public boolean isEnabled() {
+    if (view.getImageTabs() == null) return false;
+    return view.getImageTabs().getTabCount() > 1;
   }
 }
 
 public class PrintAction extends MenuBarAction {
+  Document doc;
   public PrintAction(View view) {
+    this(view, null);
+  }
+  public PrintAction(View view, Document doc) {
     super(view, "Print...", "ctrl P");
+    this.doc = doc;
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    //TODO create action
+    if (doc == null) doc = view.getSelectedDocument();
+    if (doc == null) return;
+    PrinterJob printJob = PrinterJob.getPrinterJob();
+    printJob.setPrintable(new PrintableImage(printJob, doc.getFlattenedView()));
+    if (printJob.printDialog()) {
+      try {
+        printJob.print();
+      } catch (PrinterException prt) {
+        prt.printStackTrace();
+      }
+    }
+  }
+  public class PrintableImage implements Printable {
+    private double x, y, width;
+    private int orientation;
+    private BufferedImage image;
+
+    public PrintableImage(PrinterJob printJob, BufferedImage image) {
+      PageFormat pageFormat = printJob.defaultPage();
+      this.x = pageFormat.getImageableX();
+      this.y = pageFormat.getImageableY();
+      this.width = pageFormat.getImageableWidth();
+      this.orientation = pageFormat.getOrientation();
+      this.image = image;
+    }
+
+    @Override
+    public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+      if (pageIndex == 0) {
+        int pWidth = 0;
+        int pHeight = 0;
+        if (orientation == PageFormat.PORTRAIT) {
+          pWidth = (int) Math.min(width, (double) image.getWidth());
+          pHeight = pWidth * image.getHeight() / image.getWidth();
+        } else {
+          pHeight = (int) Math.min(width, (double) image.getHeight());
+          pWidth = pHeight * image.getWidth() / image.getHeight();
+        }
+        g.drawImage(image, (int) x, (int) y, pWidth, pHeight, null);
+        return PAGE_EXISTS;
+      } else {
+        return NO_SUCH_PAGE;
+      }
+    }
   }
 }
 
@@ -190,5 +275,9 @@ public class ExitAction extends MenuBarAction {
     if (view.getImageTabs().getTabCount() == 0) {
       forceExit();
     }
+  }
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }
