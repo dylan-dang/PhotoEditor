@@ -46,6 +46,15 @@ class DragGesture {
 
 public abstract class ToolAction extends AbstractAction {
   protected DragGesture dragState = new DragGesture();
+
+  protected Point2D start, last, current;
+  protected DocumentView docView;
+  protected Document doc;
+  protected Set buttons;
+  protected Layer selectedLayer;
+  protected ColorSelector selector;
+  protected Rectangle2D.Double imageRect;
+
   View view;
   ToolAction(String toolIconName, View view) {
     this.view = view;
@@ -55,8 +64,32 @@ public abstract class ToolAction extends AbstractAction {
   public DragGesture getDragState() {
     return dragState;
   }
-  public void dragging() {};
+  public void dragStarted() {}
+  public void dragging() {}
+  public void initVars() {
+    start = dragState.getStart();
+    current = dragState.getCurrent();
+    last = dragState.getLast();
+    buttons = dragState.getButtons();
+    docView = view.getSelectedDocumentView();
+    doc = docView.getDocument();
+    selectedLayer = docView.getSelectedLayer();
+    selector = view.getToolBar().getColorSelector();
+    imageRect = new Rectangle2D.Double(0, 0, doc.getWidth(), doc.getHeight());
+  };
+  public void dragEnded() {}
   public void click(Point2D pos, int button) {}
+  protected void updateDocument() {
+    docView.getDocument().updateFlattenedView();
+    docView.getCanvas().repaint();
+  }
+  protected Color getSelectedColor() {
+    if (buttons.contains(MouseEvent.BUTTON1))
+      return selector.getPrimary();
+    if (buttons.contains(MouseEvent.BUTTON3))
+      return selector.getSecondary();
+    return null;
+  }
 }
 
 public class MoveAction extends ToolAction {
@@ -73,7 +106,29 @@ public class SelectAction extends ToolAction {
     super("select.png", view);
   }
   public void dragging() {
+    super.initVars();
+    if (!dragState.isDragging()) return; //check if just a click
 
+    int startX = (int) start.getX();
+    int startY = (int) start.getY();
+    int width = (int)current.getX() - startX + 1;
+    int height = (int)current.getY() - startY + 1;
+
+    Rectangle selection = new Rectangle(
+      startX + (width <= 0 ? --width : 0),
+      startY + (height <= 0 ? --height: 0),
+      Math.abs(width),
+      Math.abs(height))
+      .intersection(new Rectangle(0, 0, doc.getWidth(), doc.getHeight()));
+
+    if (selection.height == 0 || selection.width == 0) return;
+    docView.setSelection(selection);
+  }
+
+  @Override
+  public void click(Point2D pos, int button) {
+    docView = view.getSelectedDocumentView();
+    docView.setSelection(null);
   }
 }
 
@@ -91,21 +146,16 @@ public class EyeDropAction extends ToolAction {
     super("eyedrop.png", view);
   }
   public void dragging() {
-    Point2D pos = dragState.getCurrent();
-    DocumentView docView = view.getSelectedDocumentView();
-    Document doc = docView.getDocument();
+    super.initVars();
+    if (!imageRect.contains(current)) return;
 
-    if (new Rectangle2D.Double(0, 0, doc.getWidth(), doc.getHeight()).contains(pos)) {
-      BufferedImage samplingImage = docView.getSelectedLayer().getImage();
-      int c = samplingImage.getRGB((int) pos.getX(), (int) pos.getY());
+    BufferedImage samplingImage = selectedLayer.getImage();
+    int c = samplingImage.getRGB((int) current.getX(), (int) current.getY());
 
-      ColorSelector selector = view.getToolBar().getColorSelector();
-      Set buttons = dragState.getButtons();
-      if (buttons.contains(MouseEvent.BUTTON1))
-        selector.setPrimary(c);
-      if (buttons.contains(MouseEvent.BUTTON3))
-        selector.setSecondary(c);
-    }
+    if (buttons.contains(MouseEvent.BUTTON1))
+      selector.setPrimary(c);
+    if (buttons.contains(MouseEvent.BUTTON3))
+      selector.setSecondary(c);
   }
 }
 
@@ -114,7 +164,13 @@ public class BrushAction extends ToolAction {
     super("brush.png", view);
   }
   public void dragging() {
+    super.initVars();
+    if (!imageRect.contains(current)) return;
+    Color c = getSelectedColor();
 
+    Stroke stroke = new BasicStroke(100, BasicStroke.CAP_ROUND, 0);
+    selectedLayer.brush(last.getX(), last.getY(), current.getX(), current.getY(), stroke, c);
+    updateDocument();
   }
 }
 
@@ -123,7 +179,13 @@ public class PencilAction extends ToolAction {
     super("pencil.png", view);
   }
   public void dragging() {
+    super.initVars();
 
+    if (!imageRect.contains(current)) return;
+    Color c = getSelectedColor();
+    //i should change this to polyline with a commit layer but im running out of time
+    selectedLayer.drawLine((int)last.getX(), (int)last.getY(), (int)current.getX(), (int)current.getY(), c);
+    updateDocument();
   }
 }
 
@@ -132,7 +194,13 @@ public class EraserAction extends ToolAction {
     super("eraser.png", view);
   }
   public void dragging() {
+    super.initVars();
+    if (!imageRect.contains(current)) return;
+    Color c = getSelectedColor();
 
+    Stroke stroke = new BasicStroke(100, BasicStroke.CAP_ROUND, 0);
+    selectedLayer.erase(last.getX(), last.getY(), current.getX(), current.getY(), stroke);
+    updateDocument();
   }
 }
 
@@ -179,8 +247,6 @@ public class PanAction extends ToolAction {
 public class ZoomAction extends ToolAction {
   ZoomAction(View view){
     super("zoom.png", view);
-  }
-  public void dragging() {
   }
   public void click(Point2D pos, int button) {
     DocumentView docView = view.getSelectedDocumentView();

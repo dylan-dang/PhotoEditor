@@ -10,6 +10,8 @@ public class DocumentView extends JPanel {
   private JScrollPane scrollPane = new JScrollPane();
   private JViewport viewport = scrollPane.getViewport();
   private Layer selectedLayer;
+  private boolean drawPixelGrid = false;
+  private Shape selection;
 
   DocumentView(Document document, View view) {
     this.document = document;
@@ -81,6 +83,7 @@ public class DocumentView extends JPanel {
         } else {
           dragState.pressButton(e.getButton());
         }
+        tool.dragStarted();
         tool.dragging();
       }
       @Override
@@ -90,7 +93,7 @@ public class DocumentView extends JPanel {
         if (dragState.getButtons().isEmpty()) {
           dragState.stop(pos);
         }
-
+        tool.dragEnded();
       }
       void updatePos(MouseEvent e) {
         Point mouse = e.getPoint();
@@ -115,27 +118,83 @@ public class DocumentView extends JPanel {
     canvasWrapper.addMouseMotionListener(mouseListener);
     canvasWrapper.addMouseWheelListener(mouseListener);
     canvasWrapper.addMouseListener(mouseListener);
+    viewport.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        canvas.repaint();
+      }
+    });
+
+    setSelection(new Rectangle2D.Float(0, 0, document.getWidth(), document.getHeight()));
   }
 
   private class Canvas extends JPanel {
+    final Stroke singleWhiteDash = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{1}, 0);
+    final Stroke singleBlackDash = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{1}, 1);
+    public Stroke selectionWhiteDash = new BasicStroke();
+    public Stroke selectionBlackDash = new BasicStroke();
+
     @Override
     public void paintComponent(Graphics g) {
       super.paintComponent(g);
       Graphics2D g2 = (Graphics2D)g.create();
+
+      Rectangle viewRect = viewport.getViewRect();
+      int deltax = viewRect.x % 16;
+      int deltay = viewRect.y % 16;
+      DrawHelper.drawChecker(g2, viewRect.x - deltax, viewRect.y - deltay, viewRect.width + deltax - 1, viewRect.height + deltay - 1, 8);
+      AffineTransform preScale = g2.getTransform();
       g2.scale(scale, scale);
       g2.drawImage(document.getFlattenedView(), 0, 0, null);
+      g2.setTransform(preScale);
+
+      if (drawPixelGrid && (viewRect.height + viewRect.width) / scale < 50) { //have to limit at 50 lines idk how to make it faster
+        int startingRow = int(viewRect.y / scale);
+        for(int row = startingRow + 1; row < startingRow + viewRect.height / scale + 1; row ++) {
+          int y = (int)(scale * row);
+          drawDoubleDashed(g2, new Line2D.Float(viewRect.x, y, viewRect.x + viewRect.width, y));
+        }
+        int startingCol = int(viewRect.x / scale);
+        for(int col = startingCol + 1; col < startingCol + viewRect.width / scale + 1; col ++) {
+          int x = (int)(scale * col);
+          drawDoubleDashed(g2, new Line2D.Float(x, viewRect.y, x, viewRect.y + viewRect.height));
+        }
+      }
+
+      //hacky way of showing selection on bottom and right edges consistently
+      g2.setColor(view.CONTENT_BACKGROUND);
+      Dimension size = getPreferredSize();
+      g2.drawLine(--size.width, 0, size.width, --size.height);
+      g2.drawLine(0, size.height, size.width, size.height);
+
+
+      if (hasSelection()) {
+        drawDoubleDashed(g2, getScaledSelection(), selectionWhiteDash, selectionBlackDash);
+      }
       g2.dispose();
     }
+
+    private void drawDoubleDashed(Graphics2D g2, Shape shape, Stroke white, Stroke black) {
+      g2.setColor(Color.white);
+      g2.setStroke(white);
+      g2.draw(shape);
+      g2.setColor(Color.black);
+      g2.setStroke(black);
+      g2.draw(shape);
+    }
+    private void drawDoubleDashed(Graphics2D g2, Shape shape) {
+      drawDoubleDashed(g2, shape, singleWhiteDash, singleBlackDash);
+    }
+
     @Override
     public Dimension getPreferredSize() {
       return new Dimension(
-        round(document.getWidth() * scale),
-        round(document.getHeight() * scale)
+        round(document.getWidth() * scale + 1),
+        round(document.getHeight() * scale + 1)
       );
     }
     public boolean largerThan(Dimension container) {
-      return document.getWidth() * scale > container.getWidth() ||
-             document.getHeight() * scale > container.getHeight();
+      return getPreferredSize().width > container.getWidth() ||
+             getPreferredSize().height > container.getHeight();
     }
   }
 
@@ -193,5 +252,55 @@ public class DocumentView extends JPanel {
   }
   public JViewport getViewport() {
     return viewport;
+  }
+  public Canvas getCanvas() {
+    return canvas;
+  }
+  public Shape getSelection() {
+    if (selection == null) return new Rectangle2D.Double(0, 0, document.getWidth(), document.getHeight());
+    return selection;
+  }
+  public Shape getScaledSelection() {
+    if (selection == null) return new Rectangle2D.Double(0, 0, document.getWidth() * scale, document.getHeight() * scale);
+    AffineTransform transform = new AffineTransform();
+    transform.scale(scale, scale);
+    return transform.createTransformedShape(selection);
+  }
+  private Thread selectionAnimator;
+  public void setSelection(Shape selection) {
+    this.selection = selection;
+    canvas.repaint();
+    if (selectionAnimator == null || !selectionAnimator.isAlive() && hasSelection()) {
+      selectionAnimator = new SelectionAnimator(this);
+      selectionAnimator.start();
+    }
+  }
+  public boolean hasSelection() {
+    return selection != null;
+  }
+  public void removeSelection() {
+    this.selection = null;
+  }
+}
+
+class SelectionAnimator extends Thread {
+  DocumentView docView;
+  SelectionAnimator(DocumentView docView) {
+    this.docView = docView;
+  }
+  public void run() {
+    int cycle = 0;
+    while(docView.hasSelection()) {
+      DocumentView.Canvas canvas = docView.getCanvas();
+      canvas.selectionBlackDash = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 5 - cycle);
+      canvas.selectionWhiteDash = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 5 - ((cycle + 3) % 6));
+      Rectangle bounds = docView.getScaledSelection().getBounds();
+      bounds.grow(1, 1); //confirm entire selection is repainted
+      canvas.repaint(bounds);
+      cycle = (cycle + 1) % 6;
+      try {
+        Thread.sleep(100);
+      } catch(Exception e) {}
+    }
   }
 }

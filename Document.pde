@@ -81,6 +81,9 @@ public class Document {
   public int getWidth() {
     return width;
   }
+  public Dimension getDimension() {
+    return new Dimension(width, height);
+  }
   public Layer addLayer(int index) {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     layers.add(index, layer);
@@ -97,12 +100,15 @@ public class Layer {
   private boolean visibility = true;
   private float opacity = 1f;
   private BlendComposite blendComposite;
+  private Graphics2D g;
 
   Layer(BufferedImage image) {
     if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
       throw new IllegalStateException("Expected TYPE_INT_ARGB");
     }
     this.image = image;
+    g = image.createGraphics();
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
   }
 
   public BufferedImage getImage() {
@@ -125,5 +131,24 @@ public class Layer {
   }
   public void setOpacity(float opacity) {
     this.opacity = Math.max(0, Math.min(1, opacity));
+  }
+  public void drawLine(int x1, int y1, int x2, int y2, Color c) {
+    g.setColor(c);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    g.setStroke(new BasicStroke(1));
+    g.drawLine(x1, y1, x2, y2);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+  }
+  public void brush(double x1, double y1, double x2, double y2, Stroke stroke, Color c) {
+    g.setPaint(c);
+    g.setStroke(stroke);
+    g.draw(new Line2D.Double(x1, y1, x2, y2));
+  }
+  public void erase(double x1, double y1, double x2, double y2, Stroke stroke) {
+    g.setStroke(stroke);
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Clear);
+    g.draw(new Line2D.Double(x1, y1, x2, y2));
+    g.setComposite(before);
   }
 }

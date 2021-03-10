@@ -152,14 +152,12 @@ public class LayerListView extends JPanel {
     repaint();
   }
   public void updateProperties() {
-    println("start");
     BlendComposite blend = view.getSelectedDocumentView().getSelectedLayer().getBlendComposite();
     if (blend == null) {
       blendComboBox.setSelectedItem(blendModes[0]);
       return;
     };
     blendComboBox.setSelectedItem(blend);
-    println("end");
   }
 }
 

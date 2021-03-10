@@ -90,6 +90,12 @@ class ColorSelector extends JPanel {
   void setSecondary(int c) {
     setSecondary(new Color(c));
   };
+  Color getPrimary() {
+    return primary.getColor();
+  }
+  Color getSecondary() {
+    return secondary.getColor();
+  };
   JColorChooser getPrimaryChooser() {
     return primary;
   }

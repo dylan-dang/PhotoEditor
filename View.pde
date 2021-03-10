@@ -19,6 +19,7 @@ public class View extends JPanel {
   private JTabbedPane imageTabs;
   private JMenuBar menuBar = new JMenuBar();
   private ToolOptions toolOptions = new ToolOptions();
+  private LayerListView layerList;
 
   View(final JFrame frame) {
     //set the frame for the view to hook into
@@ -60,7 +61,7 @@ public class View extends JPanel {
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
 
-    final LayerListView layerList = new LayerListView(this);
+    layerList = new LayerListView(this);
 
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
