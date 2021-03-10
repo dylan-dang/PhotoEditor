@@ -8,7 +8,7 @@ import java.awt.print.PrinterJob;
 
 //Super Menu bar action
 private abstract class MenuBarAction extends AbstractAction {
-  View view;
+  protected View view;
 
   public MenuBarAction(View view, String name, String accelerator) {
     this.view = view;
@@ -26,7 +26,7 @@ private abstract class MenuBarAction extends AbstractAction {
   }
 
   private File file; //hacky, i know
-  public File promptFile(final boolean isOpen) {
+  protected File promptFile(final boolean isOpen) {
     final FileChooser fileChooser = new FileChooser();
     if (isOpen) fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Image Types", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif", "*.bmp", ".dib", "*.wbmp", "*.gif"));
     fileChooser.getExtensionFilters().addAll(
@@ -34,8 +34,7 @@ private abstract class MenuBarAction extends AbstractAction {
        new ExtensionFilter("JPEG", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif"),
        new ExtensionFilter("BMP", "*.bmp", ".dib"),
        new ExtensionFilter("WBMP", "*.wbmp"),
-       new ExtensionFilter("GIF", "*.gif"),
-       new ExtensionFilter("All Files", "*.*"));
+       new ExtensionFilter("GIF", "*.gif"));
     //stop the main thread and freeze frame until a file is chosen
     final CountDownLatch latch = new CountDownLatch(1);
     Platform.runLater(new Runnable() {
@@ -89,8 +88,9 @@ public class OpenFileAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    File file = super.promptFile(true);
+    File file = promptFile(true);
     if (file != null) view.addDocument(new Document(file));
+    view.getImageTabs().setSelectedIndex(view.getImageTabs().getTabCount() - 1);
   }
   @Override
   public boolean isEnabled() {
@@ -109,6 +109,10 @@ public class SaveAction extends MenuBarAction {
   }
   @Override
   public void actionPerformed(ActionEvent e) {
+    Document doc = document == null ? view.getSelectedDocument() : document;
+    if (!doc.isLinked()) return;
+    if (doc.isSaved()) return;
+
   }
 }
 
@@ -124,7 +128,14 @@ public class SaveAsAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    promptFile(false);
+    Document doc = document == null ? view.getSelectedDocument() : document;
+    File file = promptFile(false);
+    doc.updateFlattenedView();
+    try {
+      ImageIO.write(doc.getFlattenedView(), "png", file);
+    } catch (IOException ioex) {
+      //TODO
+    }
   }
 }
 

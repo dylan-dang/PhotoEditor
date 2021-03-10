@@ -143,4 +143,7 @@ public class View extends JPanel {
   public ToolBar getToolBar() {
     return toolBar;
   }
+  public LayerListView getLayerListView() {
+    return layerList;
+  }
 }

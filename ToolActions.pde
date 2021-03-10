@@ -82,6 +82,7 @@ public abstract class ToolAction extends AbstractAction {
   protected void updateDocument() {
     docView.getDocument().updateFlattenedView();
     docView.getCanvas().repaint();
+    doc.setSaved(false);
   }
   protected Color getSelectedColor() {
     if (buttons.contains(MouseEvent.BUTTON1))
@@ -186,7 +187,7 @@ public class PencilAction extends ToolAction {
     //i should add a commit layer but im running out of time
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
-    g.setColor(getSelectedColor());
+    g.setPaint(getSelectedColor());
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     g.setStroke(new BasicStroke(1));
     g.drawLine((int)last.getX(), (int)last.getY(), (int)current.getX(), (int)current.getY());
@@ -221,7 +222,18 @@ public class FillAction extends ToolAction {
     super("fill.png", view);
   }
   public void dragging() {
+    super.initVars();
 
+    if (!docView.getSelection().contains(current)) return;
+
+    Graphics2D g = selectedLayer.getGraphics();
+    g.setClip(null);
+    g.setPaint(getSelectedColor());
+    g.fill(docView.getSelection());
+    updateDocument();
+  }
+  public void dragEnded() {
+    //view.getLayerListView(). TODO
   }
 }
 

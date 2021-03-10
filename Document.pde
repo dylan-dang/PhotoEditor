@@ -7,17 +7,12 @@ public class Document {
   private File linkedFile;
 
   Document(int width, int height) {
-    this.width = 1601;
-    this.height = 664;
-    BufferedImage image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
-    image = toRGBA(image);
-    layers.add(new Layer(image));
-
-    try {
-      layers.add(new Layer(toRGBA(ImageIO.read(new File("C:/Users/user1/Desktop/smile.png")))));
-    } catch (IOException e) {
-      return; //TODO dialog error
-    }
+    this.width = width;
+    this.height = height;
+    //BufferedImage image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
+    Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
+    layer.setName("Background");
+    layers.add(layer);
   }
   Document(File file) {
     linkedFile = file;
@@ -70,6 +65,12 @@ public class Document {
   public boolean isSaved() {
     return isSaved;
   }
+  public void setSaved(boolean value) {
+    isSaved = value;
+  }
+  public boolean isLinked() {
+    return linkedFile != null;
+  }
   public ArrayList<Layer> getLayers() {
     return layers;
   }
@@ -84,6 +85,7 @@ public class Document {
   }
   public Layer addLayer(int index) {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
+    layer.setName(String.format("Layer %d", layers.size()));
     layers.add(index, layer);
     return layer;
   }
@@ -112,6 +114,12 @@ public class Layer {
   public BufferedImage getImage() {
     return image;
   }
+  public String getName() {
+    return name;
+  }
+  public void setName(String name) {
+    this.name = name;
+  }
   public BlendComposite getBlendComposite() {
     return BLEND_MODES[blendIndex];
   }
@@ -134,24 +142,4 @@ public class Layer {
   public Graphics2D getGraphics() {
     return g;
   }
-/*  public void drawLine(int x1, int y1, int x2, int y2, Color c, Shape clip) {
-    g.setClip(clip);
-    g.setColor(c);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-    g.setStroke(new BasicStroke(1));
-    g.drawLine(x1, y1, x2, y2);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-  }
-  public void brush(double x1, double y1, double x2, double y2, Stroke stroke, Color c) {
-    g.setPaint(c);
-    g.setStroke(stroke);
-    g.draw(new Line2D.Double(x1, y1, x2, y2));
-  }
-  public void erase(double x1, double y1, double x2, double y2, Stroke stroke) {
-    g.setStroke(stroke);
-    Composite before = g.getComposite();
-    g.setComposite(AlphaComposite.Clear);
-    g.draw(new Line2D.Double(x1, y1, x2, y2));
-    g.setComposite(before);
-  }*/
 }

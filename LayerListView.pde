@@ -146,7 +146,7 @@ public class LayerView extends JToggleButton implements ActionListener {
       BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY),
       BorderFactory.createEmptyBorder(6, 6, 6, 6)
     ));
-    JLabel layerLabel = new JLabel("bruh");
+    JLabel layerLabel = new JLabel(layer.getName());
     layerLabel.setIcon(new ImageIcon(thumbnail));
     add(layerLabel);
     addActionListener(this);
