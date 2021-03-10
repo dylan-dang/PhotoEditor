@@ -1,3 +1,32 @@
+public final BlendComposite[] BLEND_MODES = new BlendComposite[] {
+  new NormalComposite(),
+  null,
+  new DarkenComposite(),
+  new MultiplyComposite(),
+  new ColorBurnComposite(),
+  new AdditiveComposite(),
+  null,
+  new LightenComposite(),
+  new ScreenComposite(),
+  new ColorDodgeComposite(),
+  new SubtractiveComposite(),
+  null,
+  new OverlayComposite(),
+  new SoftLightComposite(),
+  new HardLightComposite(),
+  new VividLightComposite(),
+  new LinearLightComposite(),
+  new PinLightComposite(),
+  new HardMixComposite(),
+  null,
+  new DifferenceComposite(),
+  new ExclusionComposite(),
+  null,
+  new XorComposite(),
+  new AndComposite(),
+  new OrComposite()
+};
+
 
 public abstract class BlendComposite implements Composite, CompositeContext {
   protected int width, height;

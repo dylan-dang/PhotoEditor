@@ -1,5 +1,4 @@
 public class Document {
-  public final BlendComposite DEFAULT_BLEND = new NormalComposite();
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
   private String name = "Untitled";
@@ -60,7 +59,6 @@ public class Document {
       final Layer layer = layers.get(i);
       if (layer.isVisible()) {
         BlendComposite blendComposite = layer.getBlendComposite();
-        if (blendComposite == null) blendComposite = DEFAULT_BLEND;
         blendComposite.setOpacity(layer.getOpacity());
         g2.setComposite(blendComposite);
         g2.drawImage(layer.getImage(), null, 0, 0);
@@ -99,8 +97,8 @@ public class Layer {
   private String name;
   private boolean visibility = true;
   private float opacity = 1f;
-  private BlendComposite blendComposite;
   private Graphics2D g;
+  private int blendIndex = 0;
 
   Layer(BufferedImage image) {
     if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
@@ -115,10 +113,10 @@ public class Layer {
     return image;
   }
   public BlendComposite getBlendComposite() {
-    return blendComposite;
+    return BLEND_MODES[blendIndex];
   }
-  public void setBlendComposite(BlendComposite blendComposite) {
-    this.blendComposite = blendComposite;
+  public void setBlendComposite(int index) {
+    blendIndex = index;
   }
   public boolean isVisible() {
     return visibility;

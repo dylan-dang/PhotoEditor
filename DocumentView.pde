@@ -124,7 +124,6 @@ public class DocumentView extends JPanel {
       }
     });
 
-    setSelection(new Rectangle2D.Float(0, 0, document.getWidth(), document.getHeight()));
   }
 
   private class Canvas extends JPanel {

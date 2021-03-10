@@ -7,34 +7,6 @@ public class LayerListView extends JPanel {
   private JComboBox blendComboBox;
   private JSlider opacitySlider;
   private JSpinner opacitySpinner;
-  public final BlendComposite[] blendModes = new BlendComposite[] {
-    new NormalComposite(),
-    null,
-    new DarkenComposite(),
-    new MultiplyComposite(),
-    new ColorBurnComposite(),
-    new AdditiveComposite(),
-    null,
-    new LightenComposite(),
-    new ScreenComposite(),
-    new ColorDodgeComposite(),
-    new SubtractiveComposite(),
-    null,
-    new OverlayComposite(),
-    new SoftLightComposite(),
-    new HardLightComposite(),
-    new VividLightComposite(),
-    new LinearLightComposite(),
-    new PinLightComposite(),
-    new HardMixComposite(),
-    null,
-    new DifferenceComposite(),
-    new ExclusionComposite(),
-    null,
-    new XorComposite(),
-    new AndComposite(),
-    new OrComposite()
-  };
 
   public LayerListView(final View view) {
     this.view = view;
@@ -48,7 +20,7 @@ public class LayerListView extends JPanel {
 		JPanel blendProperty = new JPanel();
 		blendProperty.setLayout(new BoxLayout(blendProperty, BoxLayout.X_AXIS));
 		blendProperty.add(new JLabel("Blend Mode:   "));
-    blendComboBox = new JComboBox(blendModes) {
+    blendComboBox = new JComboBox(BLEND_MODES) {
       @Override
       public void setSelectedItem(Object item) {
         if (item == null) return;
@@ -66,8 +38,8 @@ public class LayerListView extends JPanel {
         JComboBox combo = (JComboBox) e.getSource();
 				DocumentView docView = view.getSelectedDocumentView();
 				Document doc = docView.getDocument();
-				docView.getSelectedLayer().setBlendComposite((BlendComposite)combo.getSelectedItem()); //TODO get selected layer
-				doc.updateFlattenedView();
+				docView.getSelectedLayer().setBlendComposite(combo.getSelectedIndex());
+        doc.updateFlattenedView();
 				docView.repaint();
       }
     });
@@ -154,7 +126,7 @@ public class LayerListView extends JPanel {
   public void updateProperties() {
     BlendComposite blend = view.getSelectedDocumentView().getSelectedLayer().getBlendComposite();
     if (blend == null) {
-      blendComboBox.setSelectedItem(blendModes[0]);
+      blendComboBox.setSelectedItem(BLEND_MODES[0]);
       return;
     };
     blendComboBox.setSelectedItem(blend);
