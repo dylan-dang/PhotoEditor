@@ -130,7 +130,12 @@ public class Layer {
   public void setOpacity(float opacity) {
     this.opacity = Math.max(0, Math.min(1, opacity));
   }
-  public void drawLine(int x1, int y1, int x2, int y2, Color c) {
+
+  public Graphics2D getGraphics() {
+    return g;
+  }
+/*  public void drawLine(int x1, int y1, int x2, int y2, Color c, Shape clip) {
+    g.setClip(clip);
     g.setColor(c);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     g.setStroke(new BasicStroke(1));
@@ -148,5 +153,5 @@ public class Layer {
     g.setComposite(AlphaComposite.Clear);
     g.draw(new Line2D.Double(x1, y1, x2, y2));
     g.setComposite(before);
-  }
+  }*/
 }

@@ -53,7 +53,7 @@ public abstract class ToolAction extends AbstractAction {
   protected Set buttons;
   protected Layer selectedLayer;
   protected ColorSelector selector;
-  protected Rectangle2D.Double imageRect;
+  protected Rectangle imageRect;
 
   View view;
   ToolAction(String toolIconName, View view) {
@@ -75,7 +75,7 @@ public abstract class ToolAction extends AbstractAction {
     doc = docView.getDocument();
     selectedLayer = docView.getSelectedLayer();
     selector = view.getToolBar().getColorSelector();
-    imageRect = new Rectangle2D.Double(0, 0, doc.getWidth(), doc.getHeight());
+    imageRect = new Rectangle(0, 0, doc.getWidth(), doc.getHeight());
   };
   public void dragEnded() {}
   public void click(Point2D pos, int button) {}
@@ -119,7 +119,7 @@ public class SelectAction extends ToolAction {
       startY + (height <= 0 ? --height: 0),
       Math.abs(width),
       Math.abs(height))
-      .intersection(new Rectangle(0, 0, doc.getWidth(), doc.getHeight()));
+      .intersection(imageRect);
 
     if (selection.height == 0 || selection.width == 0) return;
     docView.setSelection(selection);
@@ -165,11 +165,13 @@ public class BrushAction extends ToolAction {
   }
   public void dragging() {
     super.initVars();
-    if (!imageRect.contains(current)) return;
-    Color c = getSelectedColor();
 
-    Stroke stroke = new BasicStroke(100, BasicStroke.CAP_ROUND, 0);
-    selectedLayer.brush(last.getX(), last.getY(), current.getX(), current.getY(), stroke, c);
+    Graphics2D g = selectedLayer.getGraphics();
+    g.setClip(docView.getSelection());
+    g.setPaint(getSelectedColor());
+    g.setStroke(new BasicStroke(100, BasicStroke.CAP_ROUND, 0));
+    g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
+
     updateDocument();
   }
 }
@@ -181,11 +183,17 @@ public class PencilAction extends ToolAction {
   public void dragging() {
     super.initVars();
 
-    if (!imageRect.contains(current)) return;
-    Color c = getSelectedColor();
-    //i should change this to polyline with a commit layer but im running out of time
-    selectedLayer.drawLine((int)last.getX(), (int)last.getY(), (int)current.getX(), (int)current.getY(), c);
+    //i should add a commit layer but im running out of time
+    Graphics2D g = selectedLayer.getGraphics();
+    g.setClip(docView.getSelection());
+    g.setColor(getSelectedColor());
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    g.setStroke(new BasicStroke(1));
+    g.drawLine((int)last.getX(), (int)last.getY(), (int)current.getX(), (int)current.getY());
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
     updateDocument();
+
   }
 }
 
@@ -195,11 +203,15 @@ public class EraserAction extends ToolAction {
   }
   public void dragging() {
     super.initVars();
-    if (!imageRect.contains(current)) return;
-    Color c = getSelectedColor();
 
-    Stroke stroke = new BasicStroke(100, BasicStroke.CAP_ROUND, 0);
-    selectedLayer.erase(last.getX(), last.getY(), current.getX(), current.getY(), stroke);
+    Graphics2D g = selectedLayer.getGraphics();
+    g.setClip(docView.getSelection());
+    g.setStroke(new BasicStroke(100, BasicStroke.CAP_ROUND, 0));
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Clear);
+    g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
+    g.setComposite(before);
+
     updateDocument();
   }
 }
