@@ -1,7 +1,7 @@
 public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
-  private String name = "Untitled";
+  //private String name = "Untitled";
   private boolean isSaved = true;
   private BufferedImage flattened;
   private File linkedFile;
@@ -39,7 +39,10 @@ public class Document {
     return rbgaImage;
   }
   public String getName() {
-    return name;
+    if (linkedFile != null) {
+      return linkedFile.getName();
+    }
+    return "Untitled";
   }
 
   public BufferedImage getFlattenedView() {
@@ -70,6 +73,12 @@ public class Document {
   }
   public boolean isLinked() {
     return linkedFile != null;
+  }
+  public File getLinkedFile() {
+    return linkedFile;
+  }
+  public void setLinkedFile(File file) {
+    this.linkedFile = file;
   }
   public ArrayList<Layer> getLayers() {
     return layers;

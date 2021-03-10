@@ -77,12 +77,14 @@ public abstract class ToolAction extends AbstractAction {
     selector = view.getToolBar().getColorSelector();
     imageRect = new Rectangle(0, 0, doc.getWidth(), doc.getHeight());
   };
-  public void dragEnded() {}
+  public void dragEnded() {
+  }
   public void click(Point2D pos, int button) {}
   protected void updateDocument() {
     docView.getDocument().updateFlattenedView();
     docView.getCanvas().repaint();
     doc.setSaved(false);
+    view.getLayerListView().updateThumbnail(selectedLayer);
   }
   protected Color getSelectedColor() {
     if (buttons.contains(MouseEvent.BUTTON1))

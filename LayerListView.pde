@@ -131,12 +131,27 @@ public class LayerListView extends JPanel {
     };
     blendComboBox.setSelectedItem(blend);
   }
+  public void updateThumbnail(Layer layer) {
+    for (Component c: mainList.getComponents()) {
+      if (!(c instanceof LayerView)) continue;
+      LayerView layerView = (LayerView) c;
+      if (layerView.getLinkedLayer() == layer) {
+        layerView.updateThumbnail();
+      }
+    }
+  }
+  public void updateThumbnails() {
+    for (Component c: mainList.getComponents()) {
+      if (!(c instanceof LayerView)) continue;
+      ((LayerView) c).updateThumbnail();
+    }
+  }
 }
 
 public class LayerView extends JToggleButton implements ActionListener {
   LayerListView parent;
   Layer layer;
-  Image thumbnail;
+  JLabel layerLabel = new JLabel();
   private final int MAXLENGTH = 54;
   LayerView(LayerListView parent, Layer layer) {
     this.parent = parent;
@@ -146,8 +161,8 @@ public class LayerView extends JToggleButton implements ActionListener {
       BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY),
       BorderFactory.createEmptyBorder(6, 6, 6, 6)
     ));
-    JLabel layerLabel = new JLabel(layer.getName());
-    layerLabel.setIcon(new ImageIcon(thumbnail));
+    layerLabel.setText(layer.getName());
+    updateThumbnail();
     add(layerLabel);
     addActionListener(this);
   }
@@ -163,8 +178,8 @@ public class LayerView extends JToggleButton implements ActionListener {
       width = MAXLENGTH;
       height = imgHeight * MAXLENGTH / imgWidth;
     }
-    BufferedImage thumb = new BufferedImage(width + 2, height + 2, BufferedImage.TYPE_INT_RGB);
-    Graphics2D g = thumb.createGraphics();
+    BufferedImage thumbnail = new BufferedImage(width + 2, height + 2, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g = thumbnail.createGraphics();
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
     g.setColor(Color.white);
     g.fillRect(1, 1, width, height);
@@ -174,12 +189,15 @@ public class LayerView extends JToggleButton implements ActionListener {
     g.drawRect(0, 0, width + 1, height + 1);
     g.drawImage(img, 1, 1, width, height, null);
     g.dispose();
-    thumbnail = thumb;
+    layerLabel.setIcon(new ImageIcon(thumbnail));
   }
   @Override
   public void actionPerformed(ActionEvent e) {
     parent.getView().getSelectedDocumentView().setSelectedLayer(layer);
     parent.updateProperties();
+  }
+  public Layer getLinkedLayer() {
+    return layer;
   }
 }
 

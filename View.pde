@@ -115,21 +115,26 @@ public class View extends JPanel {
     return this.frame;
   }
 
-  public DocumentView addDocument(Document doc) {
+  public DocumentView addDocument(Document doc, int index) {
     DocumentView docView =  new DocumentView(doc, this);
     docView.setCanvasBackground(CONTENT_BACKGROUND);
-    imageTabs.addTab(doc.getName() + (doc.isSaved() ? "" : " *"), docView);
+    imageTabs.insertTab(doc.getName(), null, docView, null, index);
     return docView;
+  }
+  public DocumentView addDocument(Document doc) {
+    return addDocument(doc, imageTabs.getTabCount());
   }
 
   public JTabbedPane getImageTabs() {
     return imageTabs;
   }
+
   public Document getSelectedDocument() {
     DocumentView docView = getSelectedDocumentView();
     if (docView == null) return null;
     return docView.getDocument();
   }
+
   public DocumentView getSelectedDocumentView() {
     if (imageTabs == null) return null;
     return (DocumentView) imageTabs.getSelectedComponent();
@@ -143,6 +148,7 @@ public class View extends JPanel {
   public ToolBar getToolBar() {
     return toolBar;
   }
+
   public LayerListView getLayerListView() {
     return layerList;
   }

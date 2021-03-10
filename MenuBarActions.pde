@@ -71,7 +71,9 @@ public class NewFileAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    view.addDocument(new Document(800, 600));
+    int index = view.getImageTabs().getSelectedIndex() + 1;
+    view.addDocument(new Document(800, 600), index);
+    view.getImageTabs().setSelectedIndex(index);
   }
   @Override
   public boolean isEnabled() {
@@ -89,8 +91,10 @@ public class OpenFileAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     File file = promptFile(true);
-    if (file != null) view.addDocument(new Document(file));
-    view.getImageTabs().setSelectedIndex(view.getImageTabs().getTabCount() - 1);
+    if (file == null) return;
+    int index = view.getImageTabs().getSelectedIndex() + 1;
+    view.addDocument(new Document(file), index);
+    view.getImageTabs().setSelectedIndex(index);
   }
   @Override
   public boolean isEnabled() {
@@ -110,9 +114,17 @@ public class SaveAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     Document doc = document == null ? view.getSelectedDocument() : document;
-    if (!doc.isLinked()) return;
-    if (doc.isSaved()) return;
-
+    if (!doc.isLinked()) {
+      new SaveAsAction(view, doc).execute();
+      return;
+    }
+    File file = doc.getLinkedFile();
+    try {
+      ImageIO.write(doc.getFlattenedView(), "png", file);
+    } catch (IOException ioex) {
+      //TODO
+    }
+    doc.setSaved(true);
   }
 }
 
@@ -130,12 +142,9 @@ public class SaveAsAction extends MenuBarAction {
   public void actionPerformed(ActionEvent e) {
     Document doc = document == null ? view.getSelectedDocument() : document;
     File file = promptFile(false);
-    doc.updateFlattenedView();
-    try {
-      ImageIO.write(doc.getFlattenedView(), "png", file);
-    } catch (IOException ioex) {
-      //TODO
-    }
+    if (file == null) return;
+    doc.setLinkedFile(file);
+    new SaveAction(view, doc).execute();
   }
 }
 
