@@ -129,6 +129,9 @@ public class Layer {
   public BlendComposite getBlendComposite() {
     return BLEND_MODES[blendIndex];
   }
+  public int getBlendIndex() {
+    return blendIndex;
+  }
   public void setBlendComposite(int index) {
     blendIndex = index;
   }

@@ -135,8 +135,10 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     boolean enabled = view.hasSelectedDocument();
     if (enabled) {
       Layer layer = view.getSelectedDocumentView().getSelectedLayer();
-      BlendComposite blend = layer.getBlendComposite();
-      blendComboBox.setSelectedItem(blend == null ? BLEND_MODES[0] : blend);
+      blendComboBox.setSelectedIndex(layer.getBlendIndex());
+
+      opacitySpinner.setValue(layer.getOpacity() * 100d);
+
       enabled = enabled && layer.isVisible();
     }
     opacitySlider.setEnabled(enabled);
@@ -178,6 +180,10 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     } else {
       return;
     }
+    DocumentView docView = view.getSelectedDocumentView();
+    docView.getSelectedLayer().setOpacity(opacity);
+    docView.getDocument().updateFlattenedView();
+    docView.getCanvas().repaint();
   }
 
   @Override
