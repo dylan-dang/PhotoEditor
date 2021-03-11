@@ -102,7 +102,7 @@ public abstract class ToolAction extends AbstractAction {
     docView.getDocument().updateFlattenedView();
     docView.getCanvas().repaint();
     doc.setSaved(false);
-    view.getLayerListView().updateThumbnail(selectedLayer);
+    view.getLayerListView().getLayerView(selectedLayer).updateThumbnail();
   }
 
   protected Color getSelectedColor() {

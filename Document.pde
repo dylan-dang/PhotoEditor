@@ -49,15 +49,12 @@ public class Document {
   public void updateFlattenedView() { //we need to cache the view for performance
     flattened = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = flattened.createGraphics();
-    g2.drawImage(layers.get(0).getImage(), null, 0, 0);
-    for(int i = 1; i < layers.size(); i++) {
-      final Layer layer = layers.get(i);
-      if (layer.isVisible()) {
-        BlendComposite blendComposite = layer.getBlendComposite();
-        blendComposite.setOpacity(layer.getOpacity());
-        g2.setComposite(blendComposite);
-        g2.drawImage(layer.getImage(), null, 0, 0);
-      }
+    for(Layer layer: layers) {
+      if (!layer.isVisible()) continue;
+      BlendComposite blendComposite = layer.getBlendComposite();
+      blendComposite.setOpacity(layer.getOpacity());
+      g2.setComposite(blendComposite);
+      g2.drawImage(layer.getImage(), null, 0, 0);
     }
     g2.dispose();
   }

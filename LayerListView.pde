@@ -1,9 +1,10 @@
-public class LayerListView extends JPanel implements ChangeListener, ActionListener {
+public class LayerListView extends JPanel implements ChangeListener, ActionListener, DocumentListener {
   private View view;
   private JPanel layerList;
   private JButton addLayerButton;
   private GridBagConstraints layerConstraint = new GridBagConstraints();
   private ButtonGroup layerGroup = new ButtonGroup();
+  private JTextField nameField;
   private JComboBox blendComboBox;
   private JSlider opacitySlider;
   private JSpinner opacitySpinner;
@@ -23,7 +24,9 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     JPanel nameProperty = new JPanel();
     nameProperty.setLayout(new BoxLayout(nameProperty, BoxLayout.X_AXIS));
     nameProperty.add(new JLabel("Name:   "));
-    nameProperty.add(new JTextField());
+    nameField = new JTextField();
+    nameField.getDocument().addDocumentListener(this);
+    nameProperty.add(nameField);
     nameProperty.setBorder(padding);
 
     //defining the blend property
@@ -93,15 +96,6 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     updateProperties();
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    return new Dimension(200, 200);
-  }
-
-  public View getView() {
-    return view;
-  }
-
   public void update() {
     layerList.removeAll();
 
@@ -133,10 +127,11 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
 
   public void updateProperties() {
     boolean enabled = view.hasSelectedDocument();
+    nameField.setEnabled(enabled);
     if (enabled) {
       Layer layer = view.getSelectedDocumentView().getSelectedLayer();
+      nameField.setText(layer.getName());
       blendComboBox.setSelectedIndex(layer.getBlendIndex());
-
       opacitySpinner.setValue(layer.getOpacity() * 100d);
 
       enabled = enabled && layer.isVisible();
@@ -146,24 +141,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     blendComboBox.setEnabled(enabled);
   }
 
-  public void updateThumbnail(Layer layer) {
-    for (Component c: layerList.getComponents()) {
-      if (!(c instanceof LayerView)) continue;
-      LayerView layerView = (LayerView) c;
-      if (layerView.getLinkedLayer() == layer) {
-        layerView.updateThumbnail();
-      }
-    }
-  }
-
-  public void updateThumbnails() {
-    for (Component c: layerList.getComponents()) {
-      if (!(c instanceof LayerView)) continue;
-      ((LayerView) c).updateThumbnail();
-    }
-  }
-
-  @Override
+  @Override //listener for opacity
   public void stateChanged(ChangeEvent e) {
     Object source = e.getSource();
     float opacity;
@@ -186,7 +164,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     docView.getCanvas().repaint();
   }
 
-  @Override
+  @Override //listener for blend mode
   public void actionPerformed(ActionEvent e) {
     JComboBox combo = (JComboBox) e.getSource();
     DocumentView docView = view.getSelectedDocumentView();
@@ -196,17 +174,44 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     docView.getCanvas().repaint();
   }
 
-  public JComboBox getBlendComboBox() {
-    return blendComboBox;
+  @Override //listener for name
+  public void changedUpdate(DocumentEvent e) {
+    pushLayerName();
   }
 
-  public JSlider getOpacitySlider() {
-    return opacitySlider;
+  @Override //listener for name
+  public void insertUpdate(DocumentEvent e) {
+    pushLayerName();
   }
 
-  public JSpinner getOpacitySpinner() {
-    return opacitySpinner;
+  @Override //listener for name
+  public void removeUpdate(DocumentEvent e) {
+    pushLayerName();
   }
+
+  private void pushLayerName() {
+    Layer layer = view.getSelectedDocumentView().getSelectedLayer();
+    layer.setName(nameField.getText());
+    getSelectedLayerView().updateName();
+  }
+
+  public View getView() {
+    return view;
+  }
+
+  public LayerView getLayerView(Layer layer) {
+    for (Component c: layerList.getComponents()) {
+      if (!(c instanceof LayerView)) continue;
+      LayerView layerView = (LayerView) c;
+      if (layerView.getLinkedLayer() == layer) return layerView;
+    }
+    return null;
+  }
+
+  public LayerView getSelectedLayerView() {
+    return getLayerView(view.getSelectedDocumentView().getSelectedLayer());
+  }
+
 }
 
 public class LayerView extends JToggleButton implements ActionListener, ItemListener {
@@ -229,9 +234,8 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
     ));
     addActionListener(this);
 
-    layerLabel.setText(layer.getName());
     layerLabel.setPreferredSize(new Dimension(64, 32));
-    updateThumbnail();
+    update();
     add(layerLabel);
 
     visibilityButton = new JToggleButton(VISIBLE);
@@ -242,13 +246,16 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
 
     JPanel wrapper = new JPanel();
     wrapper.setLayout(new GridBagLayout());
-    wrapper.setBackground(null);
+    wrapper.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
     wrapper.setOpaque(false);
     wrapper.add(visibilityButton);
-    wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     add(wrapper, BorderLayout.EAST);
   }
-  private void updateThumbnail() {
+  public void update() {
+    updateName();
+    updateThumbnail();
+  }
+  public void updateThumbnail() {
     final BufferedImage img = layer.getImage();
     int width, height;
     final int imgHeight = img.getHeight();
@@ -272,6 +279,9 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
     g.drawImage(img, 1, 1, width, height, null);
     g.dispose();
     layerLabel.setIcon(new ImageIcon(thumbnail));
+  }
+  public void updateName() {
+    layerLabel.setText(layer.getName());
   }
   @Override
   public void actionPerformed(ActionEvent e) {
