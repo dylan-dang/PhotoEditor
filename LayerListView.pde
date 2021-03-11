@@ -54,9 +54,10 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     opacitySlider.addChangeListener(this);
 
     opacitySpinner = new JSpinner(new SpinnerNumberModel(100d, 0d, 100d, 1d));
-    opacitySpinner.setMinimumSize(new Dimension(72, 22));
-    opacitySpinner.setMaximumSize(new Dimension(72, 22));
-    opacitySpinner.setPreferredSize(new Dimension(72, 22));
+    Dimension opacitySpinnerSize = new Dimension(85, 22);
+    opacitySpinner.setMinimumSize(opacitySpinnerSize);
+    opacitySpinner.setMaximumSize(opacitySpinnerSize);
+    opacitySpinner.setPreferredSize(opacitySpinnerSize);
     opacitySpinner.setEditor(new JSpinner.NumberEditor(opacitySpinner, "##0.##'%'"));
     opacitySpinner.addChangeListener(this);
     opacityProperty.add(opacitySlider);
@@ -76,23 +77,45 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     JScrollPane scrollPane = new JScrollPane(layerList);
     add(scrollPane);
 
-    addLayerButton = new JButton("Add");
-    addLayerButton.setEnabled(false);
-    add(addLayerButton, BorderLayout.SOUTH);
-    final LayerListView thisLayerListView = this;
-    addLayerButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Document doc = view.getSelectedDocument();
-        Layer layer = doc.addLayer();
-        LayerView layerView = new LayerView(thisLayerListView, layer);
-        layerGroup.add(layerView);
-        layerList.add(layerView, layerConstraint, 0);
+    //actions
+    JPanel layerActionsPanel = new JPanel();
+    layerActionsPanel.setLayout(new BoxLayout(layerActionsPanel, BoxLayout.X_AXIS));
+    LayerAction[] layerActions = new LayerAction[] {
+      new AddLayer(this),
+      new RemoveLayer(this),
+      new DuplicateLayer(this),
+      new MergeLayer(this),
+      new MoveUpLayer(this),
+      new MoveDownLayer(this)
+    };
+    for (LayerAction action: layerActions) {
+      JButton button = new JButton(action);
+      Dimension buttonSize = new Dimension(24, 24);
+      button.setPreferredSize(buttonSize);
+      button.setMinimumSize(buttonSize);
+      button.setMaximumSize(buttonSize);
+      button.setBorderPainted(false);
+      layerActionsPanel.add(button);
+    }
+    add(layerActionsPanel, BorderLayout.SOUTH);
 
-        validate();
-        repaint();
-      }
-    });
+    addLayerButton = new JButton("Add");
+    // layerActions.add(addLayerButton);
+    // addLayerButton.setEnabled(false);
+    // final LayerListView thisLayerListView = this;
+    // addLayerButton.addActionListener(new ActionListener() {
+    //   @Override
+    //   public void actionPerformed(ActionEvent e) {
+    //     Document doc = view.getSelectedDocument();
+    //     Layer layer = doc.addLayer();
+    //     LayerView layerView = new LayerView(thisLayerListView, layer);
+    //     layerGroup.add(layerView);
+    //     layerList.add(layerView, layerConstraint, 0);
+    //
+    //     validate();
+    //     repaint();
+    //   }
+    // });
     updateProperties();
   }
 
@@ -238,7 +261,8 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
     update();
     add(layerLabel);
 
-    visibilityButton = new JToggleButton(VISIBLE);
+    visibilityButton = new JToggleButton(INVISIBLE, layer.isVisible());
+    visibilityButton.setSelectedIcon(VISIBLE);
     visibilityButton.addItemListener(this);
     visibilityButton.setPreferredSize(new Dimension(24, 24));
     visibilityButton.setContentAreaFilled(false);
@@ -283,20 +307,14 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
   public void updateName() {
     layerLabel.setText(layer.getName());
   }
-  @Override
+  @Override //layer selected
   public void actionPerformed(ActionEvent e) {
     parent.getView().getSelectedDocumentView().setSelectedLayer(layer);
     parent.updateProperties();
   }
-  @Override
+  @Override //visibilityButton button state listener
   public void itemStateChanged(ItemEvent e) {
-    if (visibilityButton.isSelected()) {
-      visibilityButton.setIcon(VISIBLE);
-      layer.setVisible(true);
-    } else {
-      visibilityButton.setIcon(INVISIBLE);
-      layer.setVisible(false);
-    }
+    layer.setVisible(visibilityButton.isSelected());
     parent.updateProperties();
     DocumentView docView = parent.getView().getSelectedDocumentView();
     docView.getDocument().updateFlattenedView();
