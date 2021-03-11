@@ -2,43 +2,54 @@ class DragGesture {
   private Point2D start = new Point2D.Double(), last = new Point2D.Double(), current = new Point2D.Double(), end = new Point2D.Double();
   private boolean dragging = false;
   private Set<Integer> buttons = new HashSet<Integer>();
+
   void start(Point2D start, int button) {
     this.start.setLocation(start);
     this.last.setLocation(start);
     this.current.setLocation(start);
     buttons.add(button);
   }
+
   void stop(Point2D end) {
     this.end.setLocation(end);
     dragging = false;
   }
+
   boolean isDragging() {
     return dragging;
   }
+
   Point2D getStart() {
     return start;
   }
+
   Point2D getEnd() {
     if (dragging) return null;
     return end;
   }
+
   void dragTo(Point2D pos) {
     dragging = true;
     last.setLocation(current);
     current.setLocation(pos);
   }
+
   Point2D getCurrent() {
     return current;
   }
+
   Point2D getLast() {
     return last;
   }
+
   Set getButtons() {
     return buttons;
   }
+
   void pressButton(int button) {
     buttons.add(button);
   }
+
   void releaseButton(int button) {
     buttons.remove(button);
   }
@@ -46,7 +57,6 @@ class DragGesture {
 
 public abstract class ToolAction extends AbstractAction {
   protected DragGesture dragState = new DragGesture();
-
   protected Point2D start, last, current;
   protected DocumentView docView;
   protected Document doc;
@@ -60,12 +70,17 @@ public abstract class ToolAction extends AbstractAction {
     this.view = view;
     putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
   }
+
   public void actionPerformed(ActionEvent e) {}
+
   public DragGesture getDragState() {
     return dragState;
   }
+
   public void dragStarted() {}
+
   public void dragging() {}
+
   public void initVars() {
     start = dragState.getStart();
     current = dragState.getCurrent();
@@ -76,16 +91,20 @@ public abstract class ToolAction extends AbstractAction {
     selectedLayer = docView.getSelectedLayer();
     selector = view.getToolBar().getColorSelector();
     imageRect = new Rectangle(0, 0, doc.getWidth(), doc.getHeight());
-  };
+  }
+
   public void dragEnded() {
   }
+
   public void click(Point2D pos, int button) {}
+
   protected void updateDocument() {
     docView.getDocument().updateFlattenedView();
     docView.getCanvas().repaint();
     doc.setSaved(false);
     view.getLayerListView().updateThumbnail(selectedLayer);
   }
+
   protected Color getSelectedColor() {
     if (buttons.contains(MouseEvent.BUTTON1))
       return selector.getPrimary();
@@ -99,6 +118,7 @@ public class MoveAction extends ToolAction {
   MoveAction(View view) {
     super("move.png", view);
   }
+
   public void dragging() {
 
   }
@@ -108,6 +128,7 @@ public class SelectAction extends ToolAction {
   SelectAction(View view) {
     super("select.png", view);
   }
+
   public void dragging() {
     super.initVars();
     if (!dragState.isDragging()) return; //check if just a click
@@ -139,6 +160,7 @@ public class CropAction extends ToolAction {
   CropAction(View view) {
     super("crop.png", view);
   }
+
   public void dragging() {
 
   }
@@ -148,12 +170,13 @@ public class EyeDropAction extends ToolAction {
   EyeDropAction(View view){
     super("eyedrop.png", view);
   }
+
   public void dragging() {
     super.initVars();
     if (!imageRect.contains(current)) return;
 
     BufferedImage samplingImage = selectedLayer.getImage();
-    int c = samplingImage.getRGB((int) current.getX(), (int) current.getY());
+    Color c = new Color(samplingImage.getRGB((int) current.getX(), (int) current.getY()), true);
 
     if (buttons.contains(MouseEvent.BUTTON1))
       selector.setPrimary(c);
@@ -166,9 +189,10 @@ public class BrushAction extends ToolAction {
   BrushAction(View view){
     super("brush.png", view);
   }
+
   public void dragging() {
     super.initVars();
-
+    if (!selectedLayer.isVisible()) return;
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
     g.setPaint(getSelectedColor());
@@ -183,9 +207,10 @@ public class PencilAction extends ToolAction {
   PencilAction(View view){
     super("pencil.png", view);
   }
+
   public void dragging() {
     super.initVars();
-
+    if (!selectedLayer.isVisible()) return;
     //i should add a commit layer but im running out of time
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
@@ -204,9 +229,10 @@ public class EraserAction extends ToolAction {
   EraserAction(View view){
     super("eraser.png", view);
   }
+
   public void dragging() {
     super.initVars();
-
+    if (!selectedLayer.isVisible()) return;
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
     g.setStroke(new BasicStroke(100, BasicStroke.CAP_ROUND, 0));
@@ -223,9 +249,10 @@ public class FillAction extends ToolAction {
   FillAction(View view){
     super("fill.png", view);
   }
+
   public void dragging() {
     super.initVars();
-
+    if (!selectedLayer.isVisible()) return;
     if (!docView.getSelection().contains(current)) return;
 
     Graphics2D g = selectedLayer.getGraphics();
@@ -234,17 +261,15 @@ public class FillAction extends ToolAction {
     g.fill(docView.getSelection());
     updateDocument();
   }
-  public void dragEnded() {
-    //view.getLayerListView(). TODO
-  }
 }
 
 public class TextAction extends ToolAction {
   TextAction(View view){
     super("text.png", view);
   }
-  public void dragging() {
 
+  public void dragging() {
+    if (!selectedLayer.isVisible()) return;
   }
 }
 
@@ -252,6 +277,7 @@ public class PanAction extends ToolAction {
   PanAction(View view){
     super("pan.png", view);
   }
+
   public void dragging() {
     DocumentView docView = view.getSelectedDocumentView();
     JViewport viewport = docView.getViewport();
@@ -274,6 +300,7 @@ public class ZoomAction extends ToolAction {
   ZoomAction(View view){
     super("zoom.png", view);
   }
+
   public void click(Point2D pos, int button) {
     DocumentView docView = view.getSelectedDocumentView();
     final float[] ZOOM_TABLE = docView.ZOOM_TABLE;

@@ -1,4 +1,3 @@
-
 public class View extends JPanel {
   public final Color CONTENT_BACKGROUND = new Color(0x282828);
   private final JFXPanel JFXPANEL = new JFXPanel();
@@ -19,10 +18,10 @@ public class View extends JPanel {
   private JTabbedPane imageTabs;
   private JMenuBar menuBar = new JMenuBar();
   private ToolOptions toolOptions = new ToolOptions();
-  private LayerListView layerList;
+  private LayerListView layerListView;
 
   View(final JFrame frame) {
-    //set the frame for the view to hook into
+    //injects itself int to the frame, when it's safe to do so
     this.frame = frame;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -61,12 +60,12 @@ public class View extends JPanel {
     imageTabs = new DnDTabbedPane();
     //imageTabs.addTab("bruh", new JPanel());
 
-    layerList = new LayerListView(this);
+    layerListView = new LayerListView(this);
 
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
     splitPane.setLeftComponent(imageTabs);
-    splitPane.setRightComponent(layerList);
+    splitPane.setRightComponent(layerListView);
     splitPane.setResizeWeight(1.0);
     splitPane.setBackground(CONTENT_BACKGROUND);
 
@@ -74,7 +73,7 @@ public class View extends JPanel {
       public void stateChanged(ChangeEvent e) {
         JTabbedPane source = (JTabbedPane) e.getSource();
         splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : SwingUtilities.getRootPane(source).getContentPane().getBackground());
-        layerList.update();
+        layerListView.update();
       }
     });
 
@@ -150,6 +149,6 @@ public class View extends JPanel {
   }
 
   public LayerListView getLayerListView() {
-    return layerList;
+    return layerListView;
   }
 }

@@ -1,7 +1,6 @@
 public class Document {
   ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
-  //private String name = "Untitled";
   private boolean isSaved = true;
   private BufferedImage flattened;
   private File linkedFile;
@@ -9,9 +8,7 @@ public class Document {
   Document(int width, int height) {
     this.width = width;
     this.height = height;
-    //BufferedImage image = (BufferedImage)loadImage("https://helpx.adobe.com/content/dam/help/en/photoshop/using/convert-color-image-black-white/jcr_content/main-pars/before_and_after/image-before/Landscape-Color.jpg").getImage();
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
-    layer.setName("Background");
     layers.add(layer);
   }
   Document(File file) {
@@ -105,7 +102,7 @@ public class Document {
 
 public class Layer {
   BufferedImage image;
-  private String name;
+  private String name = "Background";
   private boolean visibility = true;
   private float opacity = 1f;
   private Graphics2D g;
