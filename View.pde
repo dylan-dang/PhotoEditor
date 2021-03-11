@@ -1,6 +1,6 @@
 public class View extends JPanel {
-  public final Color CONTENT_BACKGROUND = new Color(0x282828);
-  private final JFXPanel JFXPANEL = new JFXPanel();
+  public final Color CONTENT_BACKGROUND = new Color(0x282828); //i could probably put this constant in a different static class
+  private final JFXPanel JFXPANEL = new JFXPanel(); //this is needed for the FileChoosers
   private ToolBar toolBar = new ToolBar(new ToolAction[] {
     new MoveAction(this),
     new SelectAction(this),
@@ -14,11 +14,11 @@ public class View extends JPanel {
     new PanAction(this),
     new ZoomAction(this)
   });
-  private JFrame frame;
-  private JTabbedPane imageTabs;
+  private JTabbedPane imageTabs = new DnDTabbedPane();
   private JMenuBar menuBar = new JMenuBar();
   private ToolOptions toolOptions = new ToolOptions();
-  private LayerListView layerListView;
+  private LayerListView layerListView = new LayerListView(this);
+  private JFrame frame;
 
   View(final JFrame frame) {
     //injects itself int to the frame, when it's safe to do so
@@ -32,7 +32,7 @@ public class View extends JPanel {
   }
 
   private View initView() {
-    //setup menubar
+    //setup frame menubar
     addMenuActions(new JMenu("File"), new MenuBarAction[] {
       new NewFileAction(this),
       new OpenFileAction(this), null,
@@ -56,11 +56,6 @@ public class View extends JPanel {
     setLayout(new MultiBorderLayout());
     add(toolBar, BorderLayout.WEST);
     add(toolOptions, BorderLayout.NORTH);
-
-    imageTabs = new DnDTabbedPane();
-    //imageTabs.addTab("bruh", new JPanel());
-
-    layerListView = new LayerListView(this);
 
     final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     add(splitPane, BorderLayout.CENTER);
@@ -90,42 +85,48 @@ public class View extends JPanel {
   }
 
   private void addMenuActions(JMenu menu, MenuBarAction[] actions) {
+    //makes it easier to add custom MenuBarAction rather than repeat the same line over and over.
+    //also creates anonymous class that overrides JMenuItem to set their enabled status without the use of listeners
+    //i will admit, it took me a while to find out i also had to set the underlying model's enable to work
     menuBar.add(menu);
 
     for(MenuBarAction action: actions) {
       if (action == null) {
         menu.addSeparator();
-      } else {
-        menu.add(new JMenuItem(action) {
-          @Override
-          public boolean isEnabled() {
-            if (getAction() == null) return super.isEnabled();
-            boolean enabled = getAction().isEnabled();
-            if (enabled == false) setArmed(false);
-            getModel().setEnabled(enabled);
-            return enabled;
-          }
-        });
+        continue;
       }
+      menu.add(new JMenuItem(action) {
+        @Override
+        public boolean isEnabled() { //makes menuActions always refer to the MenuBarAction to get it's enabled status
+          if (getAction() == null) return super.isEnabled();
+          boolean enabled = getAction().isEnabled();
+          if (enabled == false) setArmed(false);
+          getModel().setEnabled(enabled);
+          return enabled;
+        }
+      });
     }
   }
 
   public JFrame getFrame() {
-    return this.frame;
+    return frame;
   }
 
-  public DocumentView addDocument(Document doc, int index) {
+  public DocumentView insertDocument(Document doc, int index) {
     DocumentView docView =  new DocumentView(doc, this);
     docView.setCanvasBackground(CONTENT_BACKGROUND);
     imageTabs.insertTab(doc.getName(), null, docView, null, index);
     return docView;
   }
+
+  //not really used but i guess im just future proofing
   public DocumentView addDocument(Document doc) {
-    return addDocument(doc, imageTabs.getTabCount());
+    return insertDocument(doc, imageTabs.getTabCount());
   }
 
-  public JTabbedPane getImageTabs() {
-    return imageTabs;
+  public DocumentView getSelectedDocumentView() {
+    if (imageTabs == null) return null;
+    return (DocumentView) imageTabs.getSelectedComponent();
   }
 
   public Document getSelectedDocument() {
@@ -134,18 +135,21 @@ public class View extends JPanel {
     return docView.getDocument();
   }
 
-  public DocumentView getSelectedDocumentView() {
-    if (imageTabs == null) return null;
-    return (DocumentView) imageTabs.getSelectedComponent();
-  }
-
   public boolean hasSelectedDocument() {
     if (imageTabs == null) return false;
     return imageTabs.getSelectedComponent() != null;
   }
 
+  public JTabbedPane getImageTabs() {
+    return imageTabs;
+  }
+
   public ToolBar getToolBar() {
     return toolBar;
+  }
+
+  public ToolOptions getToolOptions() {
+    return toolOptions;
   }
 
   public LayerListView getLayerListView() {

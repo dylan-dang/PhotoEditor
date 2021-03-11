@@ -1,14 +1,6 @@
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-
-
-//Super Menu bar action
 private abstract class MenuBarAction extends AbstractAction {
   protected View view;
+  private File file; //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
 
   public MenuBarAction(View view, String name, String accelerator) {
     this.view = view;
@@ -25,7 +17,6 @@ private abstract class MenuBarAction extends AbstractAction {
     actionPerformed(new ActionEvent(view.getFrame(), ActionEvent.ACTION_FIRST, null));
   }
 
-  private File file; //hacky, i know
   protected File promptFile(final boolean isOpen) {
     final FileChooser fileChooser = new FileChooser();
     if (isOpen) fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Image Types", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif", "*.bmp", ".dib", "*.wbmp", "*.gif"));
@@ -56,6 +47,7 @@ private abstract class MenuBarAction extends AbstractAction {
       return file;
     }
   }
+
   @Override
   public boolean isEnabled() {
     return view.hasSelectedDocument();
@@ -72,9 +64,10 @@ public class NewFileAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     int index = view.getImageTabs().getSelectedIndex() + 1;
-    view.addDocument(new Document(800, 600), index);
+    view.insertDocument(new Document(800, 600), index);
     view.getImageTabs().setSelectedIndex(index);
   }
+
   @Override
   public boolean isEnabled() {
     return true;
@@ -82,7 +75,6 @@ public class NewFileAction extends MenuBarAction {
 }
 
 public class OpenFileAction extends MenuBarAction {
-
   public OpenFileAction(View view) {
     super(view, "Open...", "ctrl O");
     setEnabled(true);
@@ -93,9 +85,10 @@ public class OpenFileAction extends MenuBarAction {
     File file = promptFile(true);
     if (file == null) return;
     int index = view.getImageTabs().getSelectedIndex() + 1;
-    view.addDocument(new Document(file), index);
+    view.insertDocument(new Document(file), index);
     view.getImageTabs().setSelectedIndex(index);
   }
+
   @Override
   public boolean isEnabled() {
     return true;
@@ -104,13 +97,16 @@ public class OpenFileAction extends MenuBarAction {
 
 public class SaveAction extends MenuBarAction {
   private Document document;
+
   public SaveAction(View view, Document document) {
     super(view, "Save", "ctrl S");
     this.document = document;
   }
+
   public SaveAction(View view) {
     this(view, null);
   }
+
   @Override
   public void actionPerformed(ActionEvent e) {
     Document doc = document == null ? view.getSelectedDocument() : document;
@@ -130,10 +126,12 @@ public class SaveAction extends MenuBarAction {
 
 public class SaveAsAction extends MenuBarAction {
   private Document document;
+
   public SaveAsAction(View view, Document document) {
     super(view, "Save As...", "ctrl shift S");
     this.document = document;
   }
+
   public SaveAsAction(View view) {
     this(view, null);
   }
@@ -179,6 +177,7 @@ public class CloseFileAction extends MenuBarAction {
     } else {response = SAVE;}
     imageTabs.remove(i);
   }
+
   public boolean getSuccess() {
     return response != CANCEL;
   }
@@ -224,6 +223,7 @@ public class CloseOtherAction extends MenuBarAction {
       }
     }
   }
+
   @Override
   public boolean isEnabled() {
     if (view.getImageTabs() == null) return false;
@@ -233,9 +233,11 @@ public class CloseOtherAction extends MenuBarAction {
 
 public class PrintAction extends MenuBarAction {
   Document doc;
+
   public PrintAction(View view) {
     this(view, null);
   }
+
   public PrintAction(View view, Document doc) {
     super(view, "Print...", "ctrl P");
     this.doc = doc;
@@ -255,6 +257,7 @@ public class PrintAction extends MenuBarAction {
       }
     }
   }
+
   public class PrintableImage implements Printable {
     private double x, y, width;
     private int orientation;
@@ -303,6 +306,7 @@ public class ExitAction extends MenuBarAction {
       forceExit();
     }
   }
+
   @Override
   public boolean isEnabled() {
     return true;

@@ -15,6 +15,11 @@ import javafx.embed.swing.JFXPanel;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+
 void setup() {
   //styling (isn't necessary but sets up the theme)
   com.formdev.flatlaf.FlatDarkLaf.install();
