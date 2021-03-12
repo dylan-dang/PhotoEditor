@@ -408,6 +408,6 @@ public class ActualSizeAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-
+    view.getSelectedDocumentView().setScale(1.0f);
   }
 }
