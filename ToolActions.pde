@@ -99,7 +99,7 @@ public abstract class ToolAction extends AbstractAction {
   public void click(Point2D pos, int button) {}
 
   protected void updateDocument() {
-    docView.getDocument().updateFlattenedView();
+    docView.getDocument().updateFlattenedCache();
     docView.getCanvas().repaint();
     doc.setSaved(false);
     view.getLayerListView().getLayerView(selectedLayer).updateThumbnail();

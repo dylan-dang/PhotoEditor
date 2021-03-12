@@ -45,6 +45,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
       @Override
       public void setSelectedItem(Object item) {
         if (item == null) return;
+        if (item == "") getModel().setSelectedItem("");
         super.setSelectedItem(item);
       }
     };
@@ -116,20 +117,19 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     filler.setPreferredSize(new Dimension(0,0));
     layerList.add(filler, gbc);
 
-    if (!view.hasSelectedDocument()) return;
-    for(Layer layer: view.getSelectedDocument().getLayers()) {
-
-      LayerView layerView = new LayerView(this, layer);
-      layerGroup.add(layerView);
-      layerList.add(layerView, layerConstraint, 0);
-
-      if (layer == view.getSelectedDocumentView().getSelectedLayer()) {
-        layerView.setSelected(true);
+    if (view.hasSelectedDocument()) {
+      for(Layer layer: view.getSelectedDocument().getLayers()) {
+        LayerView layerView = new LayerView(this, layer);
+        layerGroup.add(layerView);
+        layerList.add(layerView, layerConstraint, 0);
+        if (layer == view.getSelectedDocumentView().getSelectedLayer()) {
+          layerView.setSelected(true);
+        }
       }
-
     }
     updateProperties();
     updateLayerActionAbility();
+
     validate();
     repaint();
   }
@@ -144,6 +144,11 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
       opacitySpinner.setValue(layer.getOpacity() * 100d);
 
       enabled = enabled && layer.isVisible();
+    } else {
+      nameField.setText("");
+      blendComboBox.setSelectedItem("");
+      opacitySpinner.setValue(0);
+      opacitySlider.setValue(0);
     }
     opacitySlider.setEnabled(enabled);
     opacitySpinner.setEnabled(enabled);
@@ -158,6 +163,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
 
   @Override //listener for opacity
   public void stateChanged(ChangeEvent e) {
+    if (!view.hasSelectedDocument()) return;
     Object source = e.getSource();
     float opacity;
     if (source instanceof JSlider) {
@@ -175,17 +181,18 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     }
     DocumentView docView = view.getSelectedDocumentView();
     docView.getSelectedLayer().setOpacity(opacity);
-    docView.getDocument().updateFlattenedView();
+    docView.getDocument().updateFlattenedCache();
     docView.getCanvas().repaint();
   }
 
   @Override //listener for blend mode
   public void actionPerformed(ActionEvent e) {
+    if (!view.hasSelectedDocument()) return;
     JComboBox combo = (JComboBox) e.getSource();
     DocumentView docView = view.getSelectedDocumentView();
     Document doc = docView.getDocument();
     docView.getSelectedLayer().setBlendComposite(combo.getSelectedIndex());
-    doc.updateFlattenedView();
+    doc.updateFlattenedCache();
     docView.getCanvas().repaint();
   }
 
@@ -205,6 +212,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
   }
 
   private void pushLayerName() {
+    if (!view.hasSelectedDocument()) return;
     Layer layer = view.getSelectedDocumentView().getSelectedLayer();
     layer.setName(nameField.getText());
     getSelectedLayerView().updateName();
@@ -308,7 +316,7 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
     layer.setVisible(visibilityButton.isSelected());
     parent.updateProperties();
     DocumentView docView = parent.getView().getSelectedDocumentView();
-    docView.getDocument().updateFlattenedView();
+    docView.getDocument().updateFlattenedCache();
     docView.getCanvas().repaint();
   }
   public Layer getLinkedLayer() {

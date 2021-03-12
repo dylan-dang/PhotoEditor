@@ -116,7 +116,7 @@ public class SaveAction extends MenuBarAction {
     }
     File file = doc.getLinkedFile();
     try {
-      ImageIO.write(doc.getFlattenedView(), "png", file);
+      ImageIO.write(doc.flattened(), "png", file);
     } catch (IOException ioex) {
       //TODO
     }
@@ -248,7 +248,7 @@ public class PrintAction extends MenuBarAction {
     if (doc == null) doc = view.getSelectedDocument();
     if (doc == null) return;
     PrinterJob printJob = PrinterJob.getPrinterJob();
-    printJob.setPrintable(new PrintableImage(printJob, doc.getFlattenedView()));
+    printJob.setPrintable(new PrintableImage(printJob, doc.flattened()));
     if (printJob.printDialog()) {
       try {
         printJob.print();

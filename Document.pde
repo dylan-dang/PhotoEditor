@@ -42,11 +42,13 @@ public class Document {
     return "Untitled";
   }
 
-  public BufferedImage getFlattenedView() {
-    if (flattened == null) updateFlattenedView();
+  public BufferedImage flattened() {
+    if (flattened == null) updateFlattenedCache();
     return flattened;
   }
-  public void updateFlattenedView() { //we need to cache the view for performance
+
+  //a real bottleneck for performance but it'll have to do for now, perhaps cache the preflattened layer below
+  public void updateFlattenedCache() {
     flattened = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = flattened.createGraphics();
     for(Layer layer: layers) {

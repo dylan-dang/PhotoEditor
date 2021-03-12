@@ -143,7 +143,7 @@ public class DocumentView extends JPanel {
       DrawHelper.drawChecker(g2, viewRect.x - deltax, viewRect.y - deltay, viewRect.width + deltax - 1, viewRect.height + deltay - 1, 8);
       AffineTransform preScale = g2.getTransform();
       g2.scale(scale, scale);
-      g2.drawImage(document.getFlattenedView(), 0, 0, null);
+      g2.drawImage(document.flattened(), 0, 0, null);
       g2.setTransform(preScale);
 
       if (drawPixelGrid && (viewRect.height + viewRect.width) / scale < 50) { //have to limit at 50 lines idk how to make it faster
