@@ -302,25 +302,24 @@ public class PanAction extends ToolAction {
 }
 
 public class ZoomAction extends ToolAction {
+  ZoomInAction zoomInAction;
+  ZoomOutAction zoomOutAction;
   ZoomAction(View view){
     super("zoom.png", view);
+    zoomInAction = new ZoomInAction(view);
+    zoomOutAction = new ZoomOutAction(view);
   }
 
   public void click(Point2D pos, int button) {
-    DocumentView docView = view.getSelectedDocumentView();
-    final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
-    int previousIndex = 0;
-    float scale = docView.getScale();
-
-    for(int i = 0; i < ZOOM_TABLE.length; i++) {
-      if (ZOOM_TABLE[i] <= scale * 100) {
-        if (button == MouseEvent.BUTTON3 && ZOOM_TABLE[i] == scale * 100) continue;
-        previousIndex = i;
-      }
+    switch(button) {
+      case MouseEvent.BUTTON1:
+        zoomInAction.setPosition(pos);
+        zoomInAction.execute();
+        break;
+      case MouseEvent.BUTTON3:
+        zoomOutAction.setPosition(pos);
+        zoomOutAction.execute();
+        break;
     }
-    pos.setLocation(pos.getX() * scale, pos.getY() * scale);
-    try {
-      docView.setScale(ZOOM_TABLE[previousIndex + (button == MouseEvent.BUTTON1 ? 1 : 0) - (button == MouseEvent.BUTTON3 ? 1 : 0)] / 100, pos);
-    } catch(ArrayIndexOutOfBoundsException e) {} // too lazy to check is out of bounds, plus it's probably faster
   }
 }

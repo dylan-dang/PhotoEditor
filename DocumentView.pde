@@ -78,12 +78,14 @@ public class DocumentView extends JPanel {
 
   private void setupZoomControl() {
     JButton[] buttons = {
-      fitToWindow = new JButton(),
-      zoomOut = new JButton(),
-      zoomIn = new JButton()
+      fitToWindow = new JButton(new ZoomToWindowAction(view)),
+      zoomOut = new JButton(new ZoomOutAction(view)),
+      zoomIn = new JButton(new ZoomInAction(view))
     };
     for(JButton button: buttons) {
       Dimension buttonSize = new Dimension(24, INFOBAR_HEIGHT);
+      button.setText(null);
+      button.setEnabled(true);
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
       button.setMaximumSize(buttonSize);
@@ -91,26 +93,6 @@ public class DocumentView extends JPanel {
       button.setBackground(null);
       button.setOpaque(false);
     }
-    fitToWindow.setAction(new ZoomToWindowAction(view));
-    fitToWindow.setEnabled(true);
-    fitToWindow.setText(null);
-    ActionListener zoomActionListener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        boolean out = (JButton)e.getSource() == zoomOut;
-        int previousIndex = 0;
-        for(int i = 0; i < ZOOM_TABLE.length; i++) {
-          if (ZOOM_TABLE[i] <= scale * 100) {
-            if (out && ZOOM_TABLE[i] == scale * 100) continue;
-            previousIndex = i;
-          }
-        }
-        try {
-          setScale(ZOOM_TABLE[previousIndex + (out ? -1: 1)] / 100);
-        } catch(ArrayIndexOutOfBoundsException ex) {}
-      }
-    };
-    zoomOut.addActionListener(zoomActionListener);
-    zoomIn.addActionListener(zoomActionListener);
 
     fitToWindow.setIcon(infoBarIcon("fitToWindow.png"));
     zoomOut.setIcon(infoBarIcon("zoomOut.png"));
