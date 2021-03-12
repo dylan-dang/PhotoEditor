@@ -29,16 +29,19 @@ public class DocumentView extends JPanel {
     this.selectedLayer = document.getLayers().get(0);
     setLayout(new BorderLayout());
 
-    Dimension labelSize = new Dimension(128, INFOBAR_HEIGHT);
     toolTipLabel = new JLabel((ImageIcon) view.getToolBar().getSelectedTool().getValue(Action.SMALL_ICON));
+    toolTipLabel.setMinimumSize(new Dimension(0, INFOBAR_HEIGHT));
+
+    Dimension labelSize = new Dimension(128, INFOBAR_HEIGHT);
     imageSizeLabel = new JLabel(String.format("%d x %dpx", document.getWidth(), document.getHeight()));
     imageSizeLabel.setIcon(infoBarIcon("imageSize.png"));
+    imageSizeLabel.setPreferredSize(labelSize);
+    imageSizeLabel.setMaximumSize(labelSize);
+
     positionLabel = new JLabel();
     positionLabel.setIcon(infoBarIcon("position.png"));
-    for (JLabel label: new JLabel[] {imageSizeLabel, positionLabel}) {
-       label.setPreferredSize(labelSize);
-       label.setMaximumSize(labelSize);
-    }
+    positionLabel.setPreferredSize(labelSize);
+    positionLabel.setMaximumSize(labelSize);
 
     setupInfoBar();
     setupViewport();
@@ -305,6 +308,7 @@ public class DocumentView extends JPanel {
     void updatePos(MouseEvent e) {
       Point mouse = e.getPoint();
       tool = view.getToolBar().getSelectedTool();
+      toolTipLabel.setText(tool.getToolTip());
       dragState = tool.getDragState();
       JComponent source = (JComponent)e.getSource();
       if(source.getLayout() instanceof GridBagLayout) { //wrapper

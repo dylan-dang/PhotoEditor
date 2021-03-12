@@ -56,6 +56,7 @@ class DragGesture {
 }
 
 public abstract class ToolAction extends AbstractAction {
+  protected String name;
   protected DragGesture dragState = new DragGesture();
   protected Point2D start, last, current;
   protected DocumentView docView;
@@ -64,11 +65,27 @@ public abstract class ToolAction extends AbstractAction {
   protected Layer selectedLayer;
   protected ColorSelector selector;
   protected Rectangle imageRect;
-
+  private String toolTip;
   View view;
-  ToolAction(String toolIconName, View view) {
+
+  ToolAction(String name, String toolIconName, View view) {
+    this.name = name;
     this.view = view;
+    toolTip = name;
     putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
+  }
+  public String getName() {
+    return name;
+  }
+  protected void setToolTip(String toolTip) {
+    this.toolTip = toolTip;
+  }
+  public String getToolTip() {
+    return toolTip;
+  }
+
+  public ImageIcon getIcon() {
+    return (ImageIcon) getValue(Action.SMALL_ICON);
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -121,7 +138,7 @@ public abstract class ToolAction extends AbstractAction {
 
 public class MoveAction extends ToolAction {
   MoveAction(View view) {
-    super("move.png", view);
+    super("Move Tool", "move.png", view);
   }
 
   public void dragging() {
@@ -131,7 +148,7 @@ public class MoveAction extends ToolAction {
 
 public class SelectAction extends ToolAction {
   SelectAction(View view) {
-    super("select.png", view);
+    super("Rectangle Select Tool", "select.png", view);
   }
 
   public void dragging() {
@@ -163,7 +180,7 @@ public class SelectAction extends ToolAction {
 
 public class CropAction extends ToolAction {
   CropAction(View view) {
-    super("crop.png", view);
+    super("Crop Tool", "crop.png", view);
   }
 
   public void dragging() {
@@ -173,7 +190,7 @@ public class CropAction extends ToolAction {
 
 public class EyeDropAction extends ToolAction {
   EyeDropAction(View view){
-    super("eyedrop.png", view);
+    super("Eyedropper Tool", "eyedrop.png", view);
   }
 
   public void dragging() {
@@ -192,7 +209,7 @@ public class EyeDropAction extends ToolAction {
 
 public class BrushAction extends ToolAction {
   BrushAction(View view){
-    super("brush.png", view);
+    super("Paintbrush Tool", "brush.png", view);
   }
 
   public void dragging() {
@@ -210,7 +227,7 @@ public class BrushAction extends ToolAction {
 
 public class PencilAction extends ToolAction {
   PencilAction(View view){
-    super("pencil.png", view);
+    super("Pencil", "pencil.png", view);
   }
 
   public void dragging() {
@@ -232,7 +249,7 @@ public class PencilAction extends ToolAction {
 
 public class EraserAction extends ToolAction {
   EraserAction(View view){
-    super("eraser.png", view);
+    super("Eraser", "eraser.png", view);
   }
 
   public void dragging() {
@@ -252,7 +269,7 @@ public class EraserAction extends ToolAction {
 
 public class FillAction extends ToolAction {
   FillAction(View view){
-    super("fill.png", view);
+    super("Paint Bucket Tool", "fill.png", view);
   }
 
   public void dragging() {
@@ -270,7 +287,7 @@ public class FillAction extends ToolAction {
 
 public class TextAction extends ToolAction {
   TextAction(View view){
-    super("text.png", view);
+    super("Text Tool", "text.png", view);
   }
 
   public void dragging() {
@@ -280,7 +297,7 @@ public class TextAction extends ToolAction {
 
 public class PanAction extends ToolAction {
   PanAction(View view){
-    super("pan.png", view);
+    super("Pan Tool", "pan.png", view);
   }
 
   public void dragging() {
@@ -305,7 +322,7 @@ public class ZoomAction extends ToolAction {
   ZoomInAction zoomInAction;
   ZoomOutAction zoomOutAction;
   ZoomAction(View view){
-    super("zoom.png", view);
+    super("Zoom Tool", "zoom.png", view);
     zoomInAction = new ZoomInAction(view);
     zoomOutAction = new ZoomOutAction(view);
   }

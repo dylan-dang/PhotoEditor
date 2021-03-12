@@ -61,28 +61,80 @@ public class ToolBar extends StyledJToolBar {
     group.setSelected(buttonModelList.get(index), true);
   }
   public ToolAction getSelectedTool() {
-    int index = buttonModelList.indexOf(group.getSelection());
-    return toolActions[index];
+    return toolActions[getSelectedIndex()];
+  }
+  public int getSelectedIndex() {
+    return buttonModelList.indexOf(group.getSelection());
   }
   public ColorSelector getColorSelector() {
     return selector;
   }
 }
 
-public class ToolOptions extends StyledJToolBar {
+public class ToolOptions extends StyledJToolBar implements ActionListener {
   JComboBox toolsCombo;
+  ToolBar toolBar;
   ToolOptions(ToolBar toolBar) {
+    this.toolBar = toolBar;
     setPreferredSize(new Dimension(32, 32));
-    HashMap<ImageIcon, JToggleButton> toolIcons = new HashMap<ImageIcon, JToggleButton>();
+
+    toolsCombo = new JComboBox();
     for(Component c: toolBar.getComponents()) {
       try {
         JToggleButton button = (JToggleButton) c;
-        toolIcons.put((ImageIcon) button.getIcon(), button);
+        button.addActionListener(this);
+        toolsCombo.addItem((ToolAction) button.getAction());
       } catch(Exception e) {}
     }
-    toolsCombo = new JComboBox(toolIcons.keySet().toArray());
-    toolsCombo.setMaximumSize(new Dimension(80, 24));
+    toolsCombo.setRenderer(new ComboBoxRenderer());
+    toolsCombo.setBackground(null);
+    toolsCombo.setOpaque(false);
+    toolsCombo.setMaximumSize(new Dimension(55, 24));
+    toolsCombo.setPreferredSize(new Dimension(55, 24));
     toolsCombo.setFocusable(false);
+    toolsCombo.addActionListener(this);
     add(toolsCombo);
+    add(Box.createRigidArea(new Dimension(5, 5)));
+    add(new JSeparator(JSeparator.VERTICAL));
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    if (e.getSource() instanceof JComboBox) {
+      toolBar.setSelectedTool(toolsCombo.getSelectedIndex());
+    } else {
+      toolsCombo.setSelectedIndex(toolBar.getSelectedIndex());
+    }
+
+  }
+}
+
+
+class ComboBoxRenderer extends JLabel implements ListCellRenderer {
+  private JSeparator separator;
+
+  public ComboBoxRenderer() {
+    setOpaque(true);
+    setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+    separator = new JSeparator(JSeparator.HORIZONTAL);
+  }
+
+  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    if (value == null) return separator;
+    setFont(list.getFont());
+    if (value instanceof ToolAction) {
+      ToolAction tool = (ToolAction) value;
+      setText(tool.getName());
+      setIcon(tool.getIcon());
+    } else {
+      setText(value.toString());
+    }
+    if (isSelected) {
+      setBackground(list.getSelectionBackground());
+      setForeground(list.getSelectionForeground());
+    } else {
+      setBackground(list.getBackground());
+      setForeground(list.getForeground());
+    }
+    return this;
   }
 }

@@ -88,14 +88,20 @@ public class Document {
   public Dimension getDimension() {
     return new Dimension(width, height);
   }
-  public Layer addLayer(int index) {
+  public Layer addEmptyLayer(int index) {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     layer.setName(String.format("Layer %d", layers.size()));
     layers.add(index, layer);
     return layer;
   }
-  public Layer addLayer() {
-    return addLayer(layers.size());
+  public Layer addEmptyLayer() {
+    return addEmptyLayer(layers.size());
+  }
+  public void addLayer(Layer layer, int index) {
+    layers.add(index, layer);
+  }
+  public void addLayer(Layer layer) {
+    layers.add(layer);
   }
 }
 
@@ -119,35 +125,57 @@ public class Layer {
   public BufferedImage getImage() {
     return image;
   }
+
   public String getName() {
     return name;
   }
+
   public void setName(String name) {
     this.name = name;
   }
+
   public BlendComposite getBlendComposite() {
     return BLEND_MODES[blendIndex];
   }
+
   public int getBlendIndex() {
     return blendIndex;
   }
+
   public void setBlendComposite(int index) {
     blendIndex = index;
   }
+
   public boolean isVisible() {
     return visibility;
   }
+
   public void setVisible(boolean visibility) {
     this.visibility = visibility;
   }
+
   public float getOpacity() {
     return opacity;
   }
+
   public void setOpacity(float opacity) {
     this.opacity = Math.max(0, Math.min(1, opacity));
   }
 
   public Graphics2D getGraphics() {
     return g;
+  }
+
+  public Layer copy() {
+    ColorModel colorModel = image.getColorModel();
+    boolean isAlphaPremultiplied = colorModel.isAlphaPremultiplied();
+    WritableRaster raster = image.copyData(image.getRaster().createCompatibleWritableRaster());
+    BufferedImage imageCopy = new BufferedImage(colorModel, raster, isAlphaPremultiplied, null);
+    Layer copy = new Layer(imageCopy);
+    copy.setName(name);
+    copy.setOpacity(opacity);
+    copy.setVisible(isVisible());
+    copy.setBlendComposite(blendIndex);
+    return copy;
   }
 }

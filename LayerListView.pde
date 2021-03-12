@@ -9,7 +9,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
   private JSpinner opacitySpinner;
   private JPanel layerActionsPanel;
   private LayerAction[] layerActions = new LayerAction[] {
-    new AddLayer(this),
+    new addEmptyLayer(this),
     new RemoveLayer(this),
     new DuplicateLayer(this),
     new MergeLayer(this),
@@ -310,6 +310,7 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
   public void actionPerformed(ActionEvent e) {
     parent.getView().getSelectedDocumentView().setSelectedLayer(layer);
     parent.updateProperties();
+    parent.updateLayerActionAbility();
   }
   @Override //visibilityButton button state listener
   public void itemStateChanged(ItemEvent e) {
@@ -321,30 +322,5 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
   }
   public Layer getLinkedLayer() {
     return layer;
-  }
-}
-
-class ComboBoxRenderer extends JLabel implements ListCellRenderer {
-  JSeparator separator;
-
-  public ComboBoxRenderer() {
-    setOpaque(true);
-    setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-    separator = new JSeparator(JSeparator.HORIZONTAL);
-  }
-
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    if (value == null) return separator;
-    String str = value.toString();
-    if (isSelected) {
-      setBackground(list.getSelectionBackground());
-      setForeground(list.getSelectionForeground());
-    } else {
-      setBackground(list.getBackground());
-      setForeground(list.getForeground());
-    }
-    setFont(list.getFont());
-    setText(str);
-    return this;
   }
 }
