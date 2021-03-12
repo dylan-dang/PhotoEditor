@@ -2,10 +2,14 @@ private abstract class MenuBarAction extends AbstractAction {
   protected View view;
   private File file; //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
 
-  public MenuBarAction(View view, String name, String accelerator) {
+  public MenuBarAction(View view, String name, Object accelerator) {
     this.view = view;
     putValue(NAME, name);
-    putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(accelerator));
+    KeyStroke acc = null;
+    if (accelerator instanceof KeyStroke) acc = (KeyStroke) accelerator;
+    if (accelerator instanceof String) acc = KeyStroke.getKeyStroke((String)accelerator);
+    if (acc == null) return;
+    putValue(ACCELERATOR_KEY, acc);
     //setEnabled(false);
   }
 
@@ -317,7 +321,7 @@ public class ExitAction extends MenuBarAction {
 public class ZoomInAction extends MenuBarAction {
   Point2D pos;
   public ZoomInAction(View view) {
-    super(view, "Zoom In", "ctrl +");
+    super(view, "Zoom In", KeyStroke.getKeyStroke('=', InputEvent.CTRL_DOWN_MASK));
   }
   public void setPosition(Point2D pos) {
     this.pos = pos;
@@ -347,7 +351,7 @@ public class ZoomInAction extends MenuBarAction {
 public class ZoomOutAction extends MenuBarAction {
   Point2D pos;
   public ZoomOutAction(View view) {
-    super(view, "Zoom Out", "ctrl -");
+    super(view, "Zoom Out", KeyStroke.getKeyStroke('-', InputEvent.CTRL_DOWN_MASK));
   }
   public void setPosition(Point2D pos) {
     this.pos = pos;
@@ -405,7 +409,11 @@ public class ZoomToSelectionAction extends MenuBarAction {
       (float)extentSize.width/(float)selected.width,
       (float)extentSize.height/(float)selected.height
     ));
-    docView.getViewport().setViewPosition(new Point((int)selected.getCenterX(), (int)selected.getCenterY()));
+    //((JPanel)docView.getViewport().getView()).scrollRectToVisible(docView.getScaledSelection().getBounds());
+    Rectangle scaledSelection = docView.getScaledSelection().getBounds();
+    docView.getViewport().setViewPosition(new Point(
+      scaledSelection.x - (extentSize.width - scaledSelection.width) / 2,
+      scaledSelection.y - (extentSize.height - scaledSelection.height) / 2));
   }
 }
 
