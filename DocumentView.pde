@@ -91,7 +91,7 @@ public class DocumentView extends JPanel {
       button.setBackground(null);
       button.setOpaque(false);
     }
-    fitToWindow.setAction(new ActualSizeAction(view));
+    fitToWindow.setAction(new ZoomToWindowAction(view));
     fitToWindow.setEnabled(true);
     fitToWindow.setText(null);
     ActionListener zoomActionListener = new ActionListener() {

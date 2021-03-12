@@ -342,7 +342,13 @@ public class ZoomToWindowAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-
+    DocumentView docView = view.getSelectedDocumentView();
+    Document doc = docView.getDocument();
+    Dimension extentSize = docView.getViewport().getExtentSize();
+    docView.setScale(Math.min(
+      (float)extentSize.width/doc.getWidth(),
+      (float)extentSize.height/doc.getHeight()
+    ));
   }
 }
 
@@ -353,7 +359,6 @@ public class ZoomToSelectionAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-
   }
 }
 
@@ -364,12 +369,6 @@ public class ActualSizeAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    DocumentView docView = view.getSelectedDocumentView();
-    Document doc = docView.getDocument();
-    Dimension extentSize = docView.getViewport().getExtentSize();
-    docView.setScale(Math.min(
-      (float)extentSize.width/doc.getWidth(),
-      (float)extentSize.height/doc.getHeight()
-    ));
+
   }
 }

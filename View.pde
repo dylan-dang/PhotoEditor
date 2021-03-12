@@ -90,7 +90,12 @@ public class View extends JPanel {
       null,
       new ExitAction(this)});
     addMenuActions(new JMenu("Edit"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("View"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("View"), new MenuBarAction[] {
+      new ZoomInAction(this),
+      new ZoomOutAction(this),
+      new ZoomToWindowAction(this),
+      new ZoomToSelectionAction(this),
+      new ActualSizeAction(this)});
     addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
     addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
