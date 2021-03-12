@@ -21,7 +21,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
 void setup() {
-  //styling (isn't necessary but sets up the theme)
+  //styling (isn't necessary to run the program but sets up the theme)
   com.formdev.flatlaf.FlatDarkLaf.install();
 
   size(800, 600);

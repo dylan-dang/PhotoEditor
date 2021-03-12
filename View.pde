@@ -1,6 +1,10 @@
 public class View extends JPanel {
   public final Color CONTENT_BACKGROUND = new Color(0x282828); //i could probably put this constant in a different static class
   private final JFXPanel JFXPANEL = new JFXPanel(); //this is needed for the FileChoosers
+
+  private JFrame frame;
+  private JMenuBar menuBar;
+  private ToolOptions toolOptions;
   private ToolBar toolBar = new ToolBar(new ToolAction[] {
     new MoveAction(this),
     new SelectAction(this),
@@ -14,11 +18,9 @@ public class View extends JPanel {
     new PanAction(this),
     new ZoomAction(this)
   });
-  private JTabbedPane imageTabs = new DnDTabbedPane();
-  private JMenuBar menuBar = new JMenuBar();
-  private ToolOptions toolOptions = new ToolOptions();
-  private LayerListView layerListView = new LayerListView(this);
-  private JFrame frame;
+  private JSplitPane splitPane;
+  private LayerListView layerListView;
+  private JTabbedPane imageTabs;
 
   View(final JFrame frame) {
     //injects itself int to the frame, when it's safe to do so
@@ -32,54 +34,20 @@ public class View extends JPanel {
   }
 
   private View initView() {
-    //setup frame menubar
-    addMenuActions(new JMenu("File"), new MenuBarAction[] {
-      new NewFileAction(this),
-      new OpenFileAction(this), null,
-      new SaveAction(this),
-      new SaveAsAction(this),
-      null,
-      new CloseFileAction(this),
-      new CloseAllAction(this),
-      new CloseOtherAction(this),
-      null,
-      new PrintAction(this),
-      null,
-      new ExitAction(this)});
-    addMenuActions(new JMenu("Edit"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("View"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
-    frame.setJMenuBar(menuBar);
-
-    setLayout(new MultiBorderLayout());
-    add(toolBar, BorderLayout.WEST);
-    add(toolOptions, BorderLayout.NORTH);
-
-    final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    add(splitPane, BorderLayout.CENTER);
-    splitPane.setLeftComponent(imageTabs);
-    splitPane.setRightComponent(layerListView);
-    splitPane.setResizeWeight(1.0);
-    splitPane.setBackground(CONTENT_BACKGROUND);
-
-    imageTabs.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        JTabbedPane source = (JTabbedPane) e.getSource();
-        splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : frame.getContentPane().getBackground());
-        layerListView.update();
-      }
-    });
-
-
-    final View view = this;
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    final ExitAction exitAction = new ExitAction(this);
     frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
-        new ExitAction(view).execute();
+        exitAction.execute();
       }
     });
+    setLayout(new MultiBorderLayout());
+
+    setupMenuBar();
+    setupToolBars();
+    setupSplitPane();
+    setupLayerListView();
+    setupImageTabs();
 
     return this;
   }
@@ -98,30 +66,73 @@ public class View extends JPanel {
       menu.add(new JMenuItem(action) {
         @Override
         public boolean isEnabled() { //makes menuActions always refer to the MenuBarAction to get it's enabled status
-          if (getAction() == null) return super.isEnabled();
-          boolean enabled = getAction().isEnabled();
-          if (enabled == false) setArmed(false);
-          getModel().setEnabled(enabled);
-          return enabled;
-        }
+        if (getAction() == null) return super.isEnabled();
+        boolean enabled = getAction().isEnabled();
+        if (enabled == false) setArmed(false);
+        getModel().setEnabled(enabled);
+        return enabled;
+      }
       });
     }
   }
 
-  public JFrame getFrame() {
-    return frame;
+  private void setupMenuBar() {
+    frame.setJMenuBar(menuBar = new JMenuBar());
+    addMenuActions(new JMenu("File"), new MenuBarAction[] {
+      new NewFileAction(this),
+      new OpenFileAction(this), null,
+      new SaveAction(this),
+      new SaveAsAction(this),
+      null,
+      new CloseFileAction(this),
+      new CloseAllAction(this),
+      new CloseOtherAction(this),
+      null,
+      new PrintAction(this),
+      null,
+      new ExitAction(this)});
+    addMenuActions(new JMenu("Edit"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("View"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
   }
 
-  public DocumentView insertDocument(Document doc, int index) {
-    DocumentView docView =  new DocumentView(doc, this);
-    docView.setCanvasBackground(CONTENT_BACKGROUND);
-    imageTabs.insertTab(doc.getName(), null, docView, null, index);
-    return docView;
+  private void setupToolBars() {
+    add(toolOptions = new ToolOptions(), BorderLayout.NORTH);
+    add(toolBar, BorderLayout.WEST);
   }
 
-  //not really used but i guess im just future proofing
-  public DocumentView addDocument(Document doc) {
-    return insertDocument(doc, imageTabs.getTabCount());
+  private void setupSplitPane() {
+    splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    splitPane.setResizeWeight(1.0);
+    splitPane.setBackground(CONTENT_BACKGROUND);
+    splitPane.setOneTouchExpandable(true);
+    add(splitPane, BorderLayout.CENTER);
+  }
+
+  private void setupLayerListView() {
+    layerListView = new LayerListView(this);
+    layerListView.setPreferredSize(layerListView.getMinimumSize());
+    splitPane.setRightComponent(layerListView);
+  }
+
+  private void setupImageTabs() {
+    imageTabs = new DnDTabbedPane();
+    imageTabs.setMinimumSize(new Dimension(0, 0));
+    imageTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+    imageTabs.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        splitPane.setBackground(imageTabs.getTabCount() == 0 ? CONTENT_BACKGROUND : frame.getContentPane().getBackground());
+        layerListView.update();
+      }
+      });
+      splitPane.setLeftComponent(imageTabs);
+  }
+
+  public boolean hasSelectedDocument() {
+    if (imageTabs == null) return false;
+    return imageTabs.getSelectedComponent() != null;
   }
 
   public DocumentView getSelectedDocumentView() {
@@ -135,21 +146,32 @@ public class View extends JPanel {
     return docView.getDocument();
   }
 
-  public boolean hasSelectedDocument() {
-    if (imageTabs == null) return false;
-    return imageTabs.getSelectedComponent() != null;
+  public DocumentView insertDocument(Document doc, int index) {
+    DocumentView docView =  new DocumentView(doc, this);
+    docView.setCanvasBackground(CONTENT_BACKGROUND);
+    imageTabs.insertTab(doc.getName(), null, docView, null, index);
+    return docView;
   }
 
-  public JTabbedPane getImageTabs() {
-    return imageTabs;
+  public DocumentView addDocument(Document doc) {
+    //not really used but its here for future proofing
+    return insertDocument(doc, imageTabs.getTabCount());
+  }
+
+  public JFrame getFrame() {
+    return frame;
+  }
+
+  public ToolOptions getToolOptions() {
+    return toolOptions;
   }
 
   public ToolBar getToolBar() {
     return toolBar;
   }
 
-  public ToolOptions getToolOptions() {
-    return toolOptions;
+  public JTabbedPane getImageTabs() {
+    return imageTabs;
   }
 
   public LayerListView getLayerListView() {
