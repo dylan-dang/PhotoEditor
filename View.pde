@@ -5,7 +5,7 @@ public class View extends JPanel {
   private JFrame frame;
   private JMenuBar menuBar;
   private ToolOptions toolOptions;
-  private ToolBar toolBar = new ToolBar(new ToolAction[] {
+  private ToolAction[] toolActions = {
     new MoveAction(this),
     new SelectAction(this),
     new CropAction(this),
@@ -17,7 +17,8 @@ public class View extends JPanel {
     new TextAction(this),
     new PanAction(this),
     new ZoomAction(this)
-  });
+  };
+  private ToolBar toolBar;
   private JSplitPane splitPane;
   private LayerListView layerListView;
   private JTabbedPane imageTabs;
@@ -102,8 +103,8 @@ public class View extends JPanel {
   }
 
   private void setupToolBars() {
-    add(toolOptions = new ToolOptions(), BorderLayout.NORTH);
-    add(toolBar, BorderLayout.WEST);
+    add(toolBar = new ToolBar(toolActions), BorderLayout.WEST);
+    add(toolOptions = new ToolOptions(toolBar), BorderLayout.NORTH);
   }
 
   private void setupSplitPane() {

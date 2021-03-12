@@ -70,7 +70,16 @@ public class ToolBar extends StyledJToolBar {
 }
 
 public class ToolOptions extends StyledJToolBar {
-  ToolOptions() {
+  JComboBox toolsCombo;
+  ToolOptions(ToolBar toolBar) {
     setPreferredSize(new Dimension(32, 32));
+    ImageIcon[] toolIcons = new ImageIcon[toolBar.getComponentCount()];
+    for(Component c: toolBar.getComponents()) {
+      try {
+        println(((JToggleButton)c).getIcon());
+      } catch(Exception e) {}
+    }
+    toolsCombo = new JComboBox(toolIcons);
+    add(toolsCombo);
   }
 }
