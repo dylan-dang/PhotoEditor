@@ -398,6 +398,14 @@ public class ZoomToSelectionAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    Rectangle selected = docView.getSelection().getBounds();
+    Dimension extentSize = docView.getViewport().getExtentSize();
+    docView.setScale(Math.min(
+      (float)extentSize.width/(float)selected.width,
+      (float)extentSize.height/(float)selected.height
+    ));
+    docView.getViewport().setViewPosition(new Point((int)selected.getCenterX(), (int)selected.getCenterY()));
   }
 }
 
