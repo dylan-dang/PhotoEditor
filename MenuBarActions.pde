@@ -312,3 +312,64 @@ public class ExitAction extends MenuBarAction {
     return true;
   }
 }
+
+//View Menu Actions
+public class ZoomInAction extends MenuBarAction {
+  public ZoomInAction(View view) {
+    super(view, "Zoom In", "ctrl +");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+  }
+}
+
+public class ZoomOutAction extends MenuBarAction {
+  public ZoomOutAction(View view) {
+    super(view, "Zoom In", "ctrl -");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+
+  }
+}
+
+public class ZoomToWindowAction extends MenuBarAction {
+  public ZoomToWindowAction(View view) {
+    super(view, "Zoom to Window", "ctrl B");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+
+  }
+}
+
+public class ZoomToSelectionAction extends MenuBarAction {
+  public ZoomToSelectionAction(View view) {
+    super(view, "Zoom to Selection", "ctrl shift B");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+
+  }
+}
+
+public class ActualSizeAction extends MenuBarAction {
+  public ActualSizeAction(View view) {
+    super(view, "Actual Size", "ctrl 0");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    Document doc = docView.getDocument();
+    Dimension extentSize = docView.getViewport().getExtentSize();
+    docView.setScale(Math.min(
+      (float)extentSize.width/doc.getWidth(),
+      (float)extentSize.height/doc.getHeight()
+    ));
+  }
+}

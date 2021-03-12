@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSpinnerUI;
 import javax.swing.event.*;
 import javax.imageio.*;
 

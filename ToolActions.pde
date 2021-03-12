@@ -71,7 +71,12 @@ public abstract class ToolAction extends AbstractAction {
     putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
   }
 
-  public void actionPerformed(ActionEvent e) {}
+  public void actionPerformed(ActionEvent e) {
+    if (view.hasSelectedDocument()) {
+      ImageIcon icon = (ImageIcon) getValue(Action.SMALL_ICON);
+      view.getSelectedDocumentView().setToolTipIcon(icon);
+    }
+  }
 
   public DragGesture getDragState() {
     return dragState;

@@ -46,8 +46,6 @@ public class View extends JPanel {
     setupMenuBar();
     setupToolBars();
     setupSplitPane();
-    setupLayerListView();
-    setupImageTabs();
 
     return this;
   }
@@ -109,6 +107,8 @@ public class View extends JPanel {
     splitPane.setBackground(CONTENT_BACKGROUND);
     splitPane.setOneTouchExpandable(true);
     add(splitPane, BorderLayout.CENTER);
+    setupLayerListView();
+    setupImageTabs();
   }
 
   private void setupLayerListView() {
