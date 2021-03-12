@@ -67,7 +67,7 @@ public class View extends JPanel {
     imageTabs.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         JTabbedPane source = (JTabbedPane) e.getSource();
-        splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : SwingUtilities.getRootPane(source).getContentPane().getBackground());
+        splitPane.setBackground(source.getTabCount() == 0 ? CONTENT_BACKGROUND : frame.getContentPane().getBackground());
         layerListView.update();
       }
     });
@@ -87,7 +87,7 @@ public class View extends JPanel {
   private void addMenuActions(JMenu menu, MenuBarAction[] actions) {
     //makes it easier to add custom MenuBarAction rather than repeat the same line over and over.
     //also creates anonymous class that overrides JMenuItem to set their enabled status without the use of listeners
-    //i will admit, it took me a while to find out i also had to set the underlying model's enable to work
+    //i will admit, it took me a while to find out i also had to set the underlying model's enabled status to work
     menuBar.add(menu);
 
     for(MenuBarAction action: actions) {

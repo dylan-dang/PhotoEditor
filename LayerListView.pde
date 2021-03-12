@@ -1,13 +1,21 @@
 public class LayerListView extends JPanel implements ChangeListener, ActionListener, DocumentListener {
   private View view;
   private JPanel layerList;
-  private JButton addLayerButton;
   private GridBagConstraints layerConstraint = new GridBagConstraints();
   private ButtonGroup layerGroup = new ButtonGroup();
   private JTextField nameField;
   private JComboBox blendComboBox;
   private JSlider opacitySlider;
   private JSpinner opacitySpinner;
+  private JPanel layerActionsPanel;
+  private LayerAction[] layerActions = new LayerAction[] {
+    new AddLayer(this),
+    new RemoveLayer(this),
+    new DuplicateLayer(this),
+    new MergeLayer(this),
+    new MoveUpLayer(this),
+    new MoveDownLayer(this)
+  };
 
   public LayerListView(final View view) {
     //setup and setting variables
@@ -65,10 +73,11 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     opacityProperty.setBorder(padding);
 
     //layer properties container
-    JPanel layerProperties = new JPanel(new BorderLayout());
-    layerProperties.add(nameProperty, BorderLayout.NORTH);
-    layerProperties.add(blendProperty, BorderLayout.CENTER);
-    layerProperties.add(opacityProperty, BorderLayout.SOUTH);
+    JPanel layerProperties = new JPanel();
+    layerProperties.setLayout(new BoxLayout(layerProperties, BoxLayout.Y_AXIS));
+    layerProperties.add(nameProperty);
+    layerProperties.add(blendProperty);
+    layerProperties.add(opacityProperty);
     add(layerProperties, BorderLayout.NORTH);
 
     //LAYER LIST
@@ -78,44 +87,21 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     add(scrollPane);
 
     //actions
-    JPanel layerActionsPanel = new JPanel();
-    layerActionsPanel.setLayout(new BoxLayout(layerActionsPanel, BoxLayout.X_AXIS));
-    LayerAction[] layerActions = new LayerAction[] {
-      new AddLayer(this),
-      new RemoveLayer(this),
-      new DuplicateLayer(this),
-      new MergeLayer(this),
-      new MoveUpLayer(this),
-      new MoveDownLayer(this)
-    };
+    layerActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 2));
+    add(layerActionsPanel, BorderLayout.SOUTH);
+    Dimension buttonSize = new Dimension(24, 24);
+    layerActionsPanel.setPreferredSize(new Dimension(0, buttonSize.height + 2));
     for (LayerAction action: layerActions) {
       JButton button = new JButton(action);
-      Dimension buttonSize = new Dimension(24, 24);
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
       button.setMaximumSize(buttonSize);
       button.setBorderPainted(false);
+      button.setBackground(null);
+      button.setOpaque(false);
       layerActionsPanel.add(button);
     }
-    add(layerActionsPanel, BorderLayout.SOUTH);
 
-    addLayerButton = new JButton("Add");
-    // layerActions.add(addLayerButton);
-    // addLayerButton.setEnabled(false);
-    // final LayerListView thisLayerListView = this;
-    // addLayerButton.addActionListener(new ActionListener() {
-    //   @Override
-    //   public void actionPerformed(ActionEvent e) {
-    //     Document doc = view.getSelectedDocument();
-    //     Layer layer = doc.addLayer();
-    //     LayerView layerView = new LayerView(thisLayerListView, layer);
-    //     layerGroup.add(layerView);
-    //     layerList.add(layerView, layerConstraint, 0);
-    //
-    //     validate();
-    //     repaint();
-    //   }
-    // });
     updateProperties();
   }
 
@@ -130,20 +116,20 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     filler.setPreferredSize(new Dimension(0,0));
     layerList.add(filler, gbc);
 
-    if (view.getSelectedDocument() != null) {
-      addLayerButton.setEnabled(true);
-      for(Layer layer: view.getSelectedDocument().getLayers()) {
-        LayerView layerView = new LayerView(this, layer);
-        layerGroup.add(layerView);
-        layerList.add(layerView, layerConstraint, 0);
-        if (layer == view.getSelectedDocumentView().getSelectedLayer()) {
-          layerView.setSelected(true);
-        }
+    if (!view.hasSelectedDocument()) return;
+    for(Layer layer: view.getSelectedDocument().getLayers()) {
+
+      LayerView layerView = new LayerView(this, layer);
+      layerGroup.add(layerView);
+      layerList.add(layerView, layerConstraint, 0);
+
+      if (layer == view.getSelectedDocumentView().getSelectedLayer()) {
+        layerView.setSelected(true);
       }
-    } else {
-      addLayerButton.setEnabled(false);
+
     }
     updateProperties();
+    updateLayerActionAbility();
     validate();
     repaint();
   }
@@ -162,6 +148,12 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
     opacitySlider.setEnabled(enabled);
     opacitySpinner.setEnabled(enabled);
     blendComboBox.setEnabled(enabled);
+  }
+
+  public void updateLayerActionAbility() {
+    for(Component c: layerActionsPanel.getComponents()) {
+      c.setEnabled(((JButton) c).getAction().isEnabled());
+    }
   }
 
   @Override //listener for opacity
@@ -234,7 +226,6 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
   public LayerView getSelectedLayerView() {
     return getLayerView(view.getSelectedDocumentView().getSelectedLayer());
   }
-
 }
 
 public class LayerView extends JToggleButton implements ActionListener, ItemListener {
