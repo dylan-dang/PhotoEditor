@@ -73,13 +73,16 @@ public class ToolOptions extends StyledJToolBar {
   JComboBox toolsCombo;
   ToolOptions(ToolBar toolBar) {
     setPreferredSize(new Dimension(32, 32));
-    ImageIcon[] toolIcons = new ImageIcon[toolBar.getComponentCount()];
+    HashMap<ImageIcon, JToggleButton> toolIcons = new HashMap<ImageIcon, JToggleButton>();
     for(Component c: toolBar.getComponents()) {
       try {
-        println(((JToggleButton)c).getIcon());
+        JToggleButton button = (JToggleButton) c;
+        toolIcons.put((ImageIcon) button.getIcon(), button);
       } catch(Exception e) {}
     }
-    toolsCombo = new JComboBox(toolIcons);
+    toolsCombo = new JComboBox(toolIcons.keySet().toArray());
+    toolsCombo.setMaximumSize(new Dimension(80, 24));
+    toolsCombo.setFocusable(false);
     add(toolsCombo);
   }
 }
