@@ -352,6 +352,9 @@ public class ZoomOutAction extends MenuBarAction {
   public void setPosition(Point2D pos) {
     this.pos = pos;
   }
+  public void setPosition(Point2D pos) {
+    this.pos = pos;
+  }
   @Override
   public void actionPerformed(ActionEvent e) {
     DocumentView docView = view.getSelectedDocumentView();
