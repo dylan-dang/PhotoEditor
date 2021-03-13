@@ -1,6 +1,7 @@
 public class View extends JPanel {
   public final Color CONTENT_BACKGROUND = new Color(0x282828); //i could probably put this constant in a different static class
   private final JFXPanel JFXPANEL = new JFXPanel(); //this is needed for the FileChoosers
+  private boolean drawPixelGrid = false;
 
   private JFrame frame;
   private JMenuBar menuBar;
@@ -96,7 +97,9 @@ public class View extends JPanel {
       new ZoomOutAction(this),
       new ZoomToWindowAction(this),
       new ZoomToSelectionAction(this),
-      new ActualSizeAction(this)});
+      new ActualSizeAction(this),
+      null,
+      new TogglePixelGrid(this)});
     addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
     addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
@@ -182,5 +185,12 @@ public class View extends JPanel {
 
   public LayerListView getLayerListView() {
     return layerListView;
+  }
+
+  public boolean isPixelGridEnabled() {
+    return drawPixelGrid;
+  }
+  public void setPixelGridEnabled(boolean value) {
+    drawPixelGrid = value;
   }
 }

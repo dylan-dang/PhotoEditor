@@ -3,6 +3,7 @@ import java.util.concurrent.CountDownLatch;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.*;

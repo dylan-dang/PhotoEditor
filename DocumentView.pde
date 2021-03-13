@@ -2,7 +2,6 @@ public class DocumentView extends JPanel {
   public final float[] ZOOM_TABLE = {2,3,4,5,6,7,8,9,10,12.5,17,20,25,33.33,50,66.67,100,150,200,300,400,500,600,800,1000,1200,1400,1600,2000,2400,3200,4000,4800,5600,6400};
   private final int INFOBAR_HEIGHT = 24;
   private Thread selectionAnimator;
-  private boolean drawPixelGrid = false;
   private float scale = 1;
 
   private View view;
@@ -191,7 +190,7 @@ public class DocumentView extends JPanel {
       g2.drawImage(document.flattened(), 0, 0, null);
       g2.setTransform(preScale);
 
-      if (drawPixelGrid && (viewRect.height + viewRect.width) / scale < 50) { //have to limit at 50 lines idk how to make it faster
+      if (view.isPixelGridEnabled() && (viewRect.height + viewRect.width) / scale < 50) { //have to limit at 50 lines idk how to make it faster
         int startingRow = int(viewRect.y / scale);
         for(int row = startingRow + 1; row < startingRow + viewRect.height / scale + 1; row ++) {
           int y = (int)(scale * row);

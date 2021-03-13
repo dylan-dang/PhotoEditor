@@ -409,11 +409,15 @@ public class ZoomToSelectionAction extends MenuBarAction {
       (float)extentSize.width/(float)selected.width,
       (float)extentSize.height/(float)selected.height
     ));
-    //((JPanel)docView.getViewport().getView()).scrollRectToVisible(docView.getScaledSelection().getBounds());
+
     Rectangle scaledSelection = docView.getScaledSelection().getBounds();
     docView.getViewport().setViewPosition(new Point(
       scaledSelection.x - (extentSize.width - scaledSelection.width) / 2,
       scaledSelection.y - (extentSize.height - scaledSelection.height) / 2));
+  }
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
   }
 }
 
@@ -425,5 +429,22 @@ public class ActualSizeAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     view.getSelectedDocumentView().setScale(1.0f);
+  }
+}
+
+public class TogglePixelGrid extends MenuBarAction {
+  public TogglePixelGrid(View view) {
+    super(view, "Turn Pixel Grid On");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    boolean pixelGridEnabled = !view.isPixelGridEnabled();
+    view.setPixelGridEnabled(pixelGridEnabled);
+    if(pixelGridEnabled) {
+      putValue(NAME, "Turn Pixel Grid Off");
+    } else {
+      putValue(NAME, "Turn Pixel Grid On");
+    }
   }
 }
