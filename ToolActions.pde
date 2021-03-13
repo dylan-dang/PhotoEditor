@@ -246,7 +246,7 @@ public class BrushAction extends ToolAction {
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
     g.setPaint(getSelectedColor());
-    g.setStroke(new BasicStroke(100, BasicStroke.CAP_ROUND, 0));
+    g.setStroke(new BasicStroke(20, BasicStroke.CAP_ROUND, 0));
     g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
 
     updateDocument();
@@ -292,7 +292,7 @@ public class EraserAction extends ToolAction {
     if (!selectedLayer.isVisible()) return;
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
-    g.setStroke(new BasicStroke(100, BasicStroke.CAP_ROUND, 0));
+    g.setStroke(new BasicStroke(20, BasicStroke.CAP_ROUND, 0));
     Composite before = g.getComposite();
     g.setComposite(AlphaComposite.Clear);
     g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));

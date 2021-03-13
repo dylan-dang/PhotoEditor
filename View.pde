@@ -104,7 +104,10 @@ public class View extends JPanel {
       new TogglePixelGrid(this)});
     addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
     addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("Filter"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Filter"), new MenuBarAction[] {
+      new PopArtFilter(this),
+      new TrippyFilter(this)
+    });
   }
 
   private void setupToolBars() {
@@ -129,7 +132,7 @@ public class View extends JPanel {
   }
 
   private void setupImageTabs() {
-    imageTabs = new DnDTabbedPane();
+    imageTabs = new JTabbedPane();
     imageTabs.setMinimumSize(new Dimension(0, 0));
     imageTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     imageTabs.addChangeListener(new ChangeListener() {
