@@ -6,7 +6,7 @@ public class DocumentView extends JPanel {
 
   private View view;
   private Document document;
-  private Layer selectedLayer;
+  private int selectedLayerIndex;
   private Shape selection;
 
   private JPanel infoBar;
@@ -22,22 +22,26 @@ public class DocumentView extends JPanel {
   private JPanel canvasWrapper;
   private Canvas canvas;
 
+  private SnapShotManager snapShotManager;
+
   DocumentView(Document document, View view) {
     this.view = view;
     this.document = document;
-    this.selectedLayer = document.getLayers().get(0);
+    this.snapShotManager = new SnapShotManager(this);
+    this.selectedLayerIndex = 0;
     setLayout(new BorderLayout());
 
     toolTipLabel = new JLabel((ImageIcon) view.getToolBar().getSelectedTool().getValue(Action.SMALL_ICON));
     toolTipLabel.setMinimumSize(new Dimension(0, INFOBAR_HEIGHT));
 
     Dimension labelSize = new Dimension(128, INFOBAR_HEIGHT);
-    imageSizeLabel = new JLabel(String.format("%d x %dpx", document.getWidth(), document.getHeight()));
+    imageSizeLabel = new JLabel();
+    updateImageSizeLabel();
     imageSizeLabel.setIcon(infoBarIcon("imageSize.png"));
     imageSizeLabel.setPreferredSize(labelSize);
     imageSizeLabel.setMaximumSize(labelSize);
 
-    positionLabel = new JLabel();
+    positionLabel = new JLabel("0, 0px");
     positionLabel.setIcon(infoBarIcon("position.png"));
     positionLabel.setPreferredSize(labelSize);
     positionLabel.setMaximumSize(labelSize);
@@ -425,11 +429,19 @@ public class DocumentView extends JPanel {
   }
 
   public Layer getSelectedLayer() {
-    return selectedLayer;
+    return document.getLayers().get(selectedLayerIndex);
   }
 
   public void setSelectedLayer(Layer layer) {
-    selectedLayer = layer;
+    selectedLayerIndex = document.getLayers().indexOf(layer);
+  }
+
+  public void setSelectedLayerIndex(int index) {
+    selectedLayerIndex = index;
+  }
+
+  public int getSelectedLayerIndex() {
+    return selectedLayerIndex;
   }
 
   public Document getDocument() {
@@ -450,5 +462,15 @@ public class DocumentView extends JPanel {
 
   public void setToolTipIcon(Icon icon) {
     toolTipLabel.setIcon(icon);
+  }
+
+  public void updateImageSizeLabel() {
+    imageSizeLabel.setText(String.format("%d x %dpx", document.getWidth(), document.getHeight()));
+  }
+  public SnapShotManager getSnapShotManager() {
+    return snapShotManager;
+  }
+  public void save() {
+    snapShotManager.save();
   }
 }

@@ -17,7 +17,8 @@ public class Document {
     try {
       image = ImageIO.read(file);
     } catch (IOException e) {
-      return; //TODO dialog error
+      JOptionPane.showMessageDialog(null, "Something went wrong when trying to read your file.", "Error", JOptionPane.ERROR_MESSAGE);
+      return;
     }
     width = image.getWidth();
     height = image.getHeight();
@@ -85,6 +86,12 @@ public class Document {
   public int getWidth() {
     return width;
   }
+  public void setHeight(int height) {
+    this.height = height;
+  }
+  public void setWidth(int width) {
+    this.width = width;
+  }
   public Dimension getDimension() {
     return new Dimension(width, height);
   }
@@ -102,6 +109,87 @@ public class Document {
   }
   public void addLayer(Layer layer) {
     layers.add(layer);
+  }
+  public void crop(Rectangle rect) {
+    for(Layer layer: layers) {
+      layer.crop(rect);
+    }
+    width = rect.width;
+    height = rect.height;
+  }
+}
+
+public class SnapShot {
+  private ArrayList<Layer> layers = new ArrayList<Layer>();
+  private int height, width;
+  private int selectedLayer;
+  SnapShot(Document doc, int selectedLayer) {
+    height = doc.getHeight();
+    width = doc.getWidth();
+    for(Layer layer: doc.getLayers()) {
+      layers.add(layer.copy());
+    }
+    this.selectedLayer = selectedLayer;
+  }
+  public ArrayList<Layer> getLayers() {
+    return layers;
+  }
+  public int getHeight() {
+    return height;
+  }
+  public int getWidth() {
+    return width;
+  }
+  public int getSelectedLayer() {
+    return selectedLayer;
+  }
+}
+
+public class SnapShotManager {
+  Document doc;
+  DocumentView docView;
+  ArrayDeque<SnapShot> undoHistory = new ArrayDeque<SnapShot>();
+  ArrayDeque<SnapShot> redoHistory = new ArrayDeque<SnapShot>();
+  SnapShotManager(DocumentView docView) {
+    this.docView = docView;
+    this.doc = docView.getDocument();
+  }
+  public void save(SnapShot snapshot) {
+    redoHistory.clear();
+    undoHistory.push(snapshot);
+  }
+  public void save() {
+    redoHistory.clear();
+    undoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
+    println(undoHistory);
+  }
+  public void undo() {
+    if (!ableToUndo())return;
+    SnapShot save = undoHistory.pop();
+    redoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
+    restore(save);
+  }
+  public void redo() {
+    if (!ableToRedo()) return;
+    SnapShot save = redoHistory.pop();
+    undoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
+    restore(save);
+  }
+  private void restore(SnapShot save) {
+    ArrayList<Layer> layers = doc.getLayers();
+    layers.clear();
+    layers.addAll(save.getLayers());
+    doc.setHeight(save.getHeight());
+    doc.setWidth(save.getWidth());
+    docView.setSelectedLayerIndex(save.getSelectedLayer());
+    docView.revalidate();
+    docView.repaint();
+  }
+  public boolean ableToUndo() {
+    return !undoHistory.isEmpty();
+  }
+  public boolean ableToRedo() {
+    return !redoHistory.isEmpty();
   }
 }
 
@@ -124,6 +212,14 @@ public class Layer {
 
   public BufferedImage getImage() {
     return image;
+  }
+
+  public void crop(Rectangle rect) {
+    g.dispose();
+    BufferedImage crop = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
+    image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+    g = image.createGraphics();
+    g.drawImage(crop, 0, 0, null);
   }
 
   public String getName() {

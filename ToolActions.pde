@@ -124,7 +124,7 @@ public abstract class ToolAction extends AbstractAction {
     docView.getDocument().updateFlattenedCache();
     docView.getCanvas().repaint();
     doc.setSaved(false);
-    view.getLayerListView().getLayerView(selectedLayer).updateThumbnail();
+    view.getLayerListView().update();
   }
 
   protected Color getSelectedColor() {
@@ -143,6 +143,9 @@ public class MoveAction extends ToolAction {
 
   public void dragging() {
 
+  }
+
+  public void dragEnded() {
   }
 }
 
@@ -182,9 +185,34 @@ public class CropAction extends ToolAction {
   CropAction(View view) {
     super("Crop Tool", "crop.png", view);
   }
-
+  public void dragStarted() {
+    view.getSelectedDocumentView().snapShotManager.save();
+  }
   public void dragging() {
+    super.initVars();
+    if (!dragState.isDragging()) return; //check if just a click
 
+    int startX = (int) start.getX();
+    int startY = (int) start.getY();
+    int width = (int)current.getX() - startX + 1;
+    int height = (int)current.getY() - startY + 1;
+
+    Rectangle selection = new Rectangle(
+      startX + (width <= 0 ? --width : 0),
+      startY + (height <= 0 ? --height: 0),
+      Math.abs(width),
+      Math.abs(height))
+      .intersection(imageRect);
+
+    if (selection.height == 0 || selection.width == 0) return;
+    docView.setSelection(selection);
+  }
+  public void dragEnded() {
+    doc.crop(docView.getSelection().getBounds());
+    docView.setSelection(null);
+    docView.getCanvas().revalidate();
+    docView.updateImageSizeLabel();
+    view.getLayerListView().update();
   }
 }
 
@@ -223,13 +251,18 @@ public class BrushAction extends ToolAction {
 
     updateDocument();
   }
+  public void dragStarted() {
+    view.getSelectedDocumentView().snapShotManager.save();
+  }
 }
 
 public class PencilAction extends ToolAction {
   PencilAction(View view){
     super("Pencil", "pencil.png", view);
   }
-
+  public void dragStarted() {
+    view.getSelectedDocumentView().snapShotManager.save();
+  }
   public void dragging() {
     super.initVars();
     if (!selectedLayer.isVisible()) return;
@@ -251,7 +284,9 @@ public class EraserAction extends ToolAction {
   EraserAction(View view){
     super("Eraser", "eraser.png", view);
   }
-
+  public void dragStarted() {
+    view.getSelectedDocumentView().snapShotManager.save();
+  }
   public void dragging() {
     super.initVars();
     if (!selectedLayer.isVisible()) return;
@@ -271,7 +306,9 @@ public class FillAction extends ToolAction {
   FillAction(View view){
     super("Paint Bucket Tool", "fill.png", view);
   }
-
+  public void dragStarted() {
+    view.getSelectedDocumentView().snapShotManager.save();
+  }
   public void dragging() {
     super.initVars();
     if (!selectedLayer.isVisible()) return;

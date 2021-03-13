@@ -7,7 +7,7 @@ public class View extends JPanel {
   private JMenuBar menuBar;
   private ToolOptions toolOptions;
   private ToolAction[] toolActions = {
-    new MoveAction(this),
+    //new MoveAction(this),
     new SelectAction(this),
     new CropAction(this),
     new EyeDropAction(this),
@@ -15,7 +15,7 @@ public class View extends JPanel {
     new PencilAction(this),
     new EraserAction(this),
     new FillAction(this),
-    new TextAction(this),
+    //new TextAction(this),
     new PanAction(this),
     new ZoomAction(this)
   };
@@ -91,7 +91,9 @@ public class View extends JPanel {
       new PrintAction(this),
       null,
       new ExitAction(this)});
-    addMenuActions(new JMenu("Edit"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Edit"), new MenuBarAction[] {
+      new UndoAction(this),
+      new RedoAction(this)});
     addMenuActions(new JMenu("View"), new MenuBarAction[] {
       new ZoomInAction(this),
       new ZoomOutAction(this),
@@ -135,8 +137,8 @@ public class View extends JPanel {
         splitPane.setBackground(imageTabs.getTabCount() == 0 ? CONTENT_BACKGROUND : frame.getContentPane().getBackground());
         layerListView.update();
       }
-      });
-      splitPane.setLeftComponent(imageTabs);
+    });
+    splitPane.setLeftComponent(imageTabs);
   }
 
   public boolean hasSelectedDocument() {

@@ -14,7 +14,7 @@ public abstract class LayerAction extends AbstractAction {
     doc = docView.getDocument();
     layers = doc.getLayers();
     selectedLayer = docView.getSelectedLayer();
-    selectedIndex = layers.indexOf(selectedLayer);
+    selectedIndex = docView.getSelectedLayerIndex();
   }
   @Override
   public boolean isEnabled() {
@@ -32,8 +32,9 @@ public class addEmptyLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
-    Layer layer = doc.addEmptyLayer(selectedIndex + 1);
-    docView.setSelectedLayer(layer);
+    docView.save();
+    Layer layer = doc.addEmptyLayer(++selectedIndex);
+    docView.setSelectedLayerIndex(selectedIndex);
     list.update();
   }
 }
@@ -46,6 +47,7 @@ public class RemoveLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
+    docView.save();
     layers.remove(selectedIndex);
     docView.setSelectedLayer((Layer)layers.get(Math.max(selectedIndex - 1, 0)));
     list.update();
@@ -64,8 +66,10 @@ public class DuplicateLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
+    docView.save();
     Layer copy = selectedLayer.copy();
     doc.addLayer(copy, selectedIndex);
+    docView.setSelectedLayerIndex(selectedIndex + 1);
     list.update();
   }
 }
@@ -78,6 +82,7 @@ public class MergeLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
+    docView.save();
     Layer below = doc.getLayers().get(selectedIndex - 1);
     Graphics2D g = below.getGraphics();
     Composite before = g.getComposite();
@@ -105,7 +110,9 @@ public class MoveUpLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
+    docView.save();
     Collections.swap(layers, selectedIndex, selectedIndex + 1);
+    docView.setSelectedLayerIndex(selectedIndex + 1);
     list.update();
   }
 
@@ -123,7 +130,9 @@ public class MoveDownLayer extends LayerAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
+    docView.save();
     Collections.swap(layers, selectedIndex, selectedIndex - 1);
+    docView.setSelectedLayerIndex(selectedIndex - 1);
     list.update();
   }
 

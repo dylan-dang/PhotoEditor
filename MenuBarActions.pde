@@ -121,8 +121,9 @@ public class SaveAction extends MenuBarAction {
     File file = doc.getLinkedFile();
     try {
       ImageIO.write(doc.flattened(), "png", file);
+      throw new IOException();
     } catch (IOException ioex) {
-      //TODO
+      JOptionPane.showMessageDialog(null, "Something went wrong when trying to save your file.", "Error", JOptionPane.ERROR_MESSAGE);
     }
     doc.setSaved(true);
   }
@@ -316,6 +317,42 @@ public class ExitAction extends MenuBarAction {
     return true;
   }
 }
+//Edit Menu Actions
+public class UndoAction extends MenuBarAction {
+  public UndoAction(View view) {
+    super(view, "Undo", "ctrl Z");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    view.getSelectedDocumentView().snapShotManager.undo();
+    view.getLayerListView().update();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().snapShotManager.ableToUndo();
+  }
+}
+
+public class RedoAction extends MenuBarAction {
+  public RedoAction(View view) {
+    super(view, "Redo", "ctrl shift Z");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    view.getSelectedDocumentView().getSnapShotManager().redo();
+    view.getLayerListView().update();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSnapShotManager().ableToRedo();
+  }
+}
+
+
 
 //View Menu Actions
 public class ZoomInAction extends MenuBarAction {
