@@ -404,6 +404,7 @@ public class AndComposite extends BlendComposite {
         return "And";
     }
 }
+
 public class OrComposite extends BlendComposite {
     @Override
     protected int blendPixel(int src, int dst) {
