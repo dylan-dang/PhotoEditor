@@ -216,6 +216,7 @@ public class AdditiveComposite extends SeparableBlendComposite {
         return "Additive (Linear Dodge)";
     }
 }
+
 public class SubtractiveComposite extends SeparableBlendComposite {
     @Override
     protected float blendChannel(float src, float dst) {
