@@ -1,487 +1,497 @@
 private abstract class MenuBarAction extends AbstractAction {
-  protected View view;
-  private File file; //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
-
-  public MenuBarAction(View view, String name, Object accelerator) {
-    this.view = view;
-    putValue(NAME, name);
-    KeyStroke acc = null;
-    if (accelerator instanceof KeyStroke) acc = (KeyStroke) accelerator;
-    if (accelerator instanceof String) acc = KeyStroke.getKeyStroke((String)accelerator);
-    if (acc == null) return;
-    putValue(ACCELERATOR_KEY, acc);
-    //setEnabled(false);
-  }
-
-  public MenuBarAction(View view, String name) {
-    this(view, name, null);
-  }
-
-  public void execute() {
-    actionPerformed(new ActionEvent(view.getFrame(), ActionEvent.ACTION_FIRST, null));
-  }
-
-  protected File promptFile(final boolean isOpen) {
-    final FileChooser fileChooser = new FileChooser();
-    if (isOpen) fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Image Types", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif", "*.bmp", ".dib", "*.wbmp", "*.gif"));
-    fileChooser.getExtensionFilters().addAll(
-       new ExtensionFilter("PNG", "*.png"),
-       new ExtensionFilter("JPEG", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif"),
-       new ExtensionFilter("BMP", "*.bmp", ".dib"),
-       new ExtensionFilter("WBMP", "*.wbmp"),
-       new ExtensionFilter("GIF", "*.gif"));
-    //stop the main thread and freeze frame until a file is chosen
-    final CountDownLatch latch = new CountDownLatch(1);
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        view.getFrame().setEnabled(false);
-        file = isOpen ? fileChooser.showOpenDialog(null) : fileChooser.showSaveDialog(null);
-        latch.countDown();
-        view.getFrame().setAlwaysOnTop(true);
-      }
-    });
-    try {
-      latch.await();
-    } catch (InterruptedException ex) {
-      throw new RuntimeException(ex);
-    } finally {
-      view.getFrame().setEnabled(true);
-      view.getFrame().setAlwaysOnTop(false);
-      return file;
+    protected View view;
+    private File file; //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
+    
+    public MenuBarAction(View view, String name, Object accelerator) {
+        this.view = view;
+        putValue(NAME, name);
+        KeyStroke acc = null;
+        if (accelerator instanceof KeyStroke) acc = (KeyStroke) accelerator;
+        if (accelerator instanceof String) acc = KeyStroke.getKeyStroke((String)accelerator);
+        if (acc == null) return;
+        putValue(ACCELERATOR_KEY, acc);
+        //setEnabled(false);
     }
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return view.hasSelectedDocument();
-  }
+    
+    public MenuBarAction(View view, String name) {
+        this(view, name, null);
+    }
+    
+    public void execute() {
+        actionPerformed(new ActionEvent(view.getFrame(), ActionEvent.ACTION_FIRST, null));
+    }
+    
+    protected File promptFile(final boolean isOpen) {
+        final FileChooser fileChooser = new FileChooser();
+        if (isOpen) fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Image Types", "*.png", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif", "*.bmp", ".dib", "*.wbmp", "*.gif"));
+        fileChooser.getExtensionFilters().addAll(
+            new ExtensionFilter("PNG", "*.png"),
+            new ExtensionFilter("JPEG", "*.jpg", "*.jpeg", "*.jpe", "*.jif", "*.jfif"),
+            new ExtensionFilter("BMP", "*.bmp", ".dib"),
+            new ExtensionFilter("WBMP", "*.wbmp"),
+            new ExtensionFilter("GIF", "*.gif"));
+        //stop the main thread and freeze frame until a file is chosen
+        final CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                view.getFrame().setEnabled(false);
+                file = isOpen ? fileChooser.showOpenDialog(null) : fileChooser.showSaveDialog(null);
+                latch.countDown();
+                view.getFrame().setAlwaysOnTop(true);
+            }
+        } );
+        try {
+            latch.await();
+        } catch(InterruptedException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            view.getFrame().setEnabled(true);
+            view.getFrame().setAlwaysOnTop(false);
+            return file;
+        }
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return view.hasSelectedDocument();
+    }
 }
 
 //File Menu Actions
 public class NewFileAction extends MenuBarAction {
-  public NewFileAction(View view) {
-    super(view, "New...", "ctrl N");
-    setEnabled(true);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    int index = view.getImageTabs().getSelectedIndex() + 1;
-    view.insertDocument(new Document(800, 600), index);
-    view.getImageTabs().setSelectedIndex(index);
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
+    public NewFileAction(View view) {
+        super(view, "New...", "ctrl N");
+        setEnabled(true);
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int index = view.getImageTabs().getSelectedIndex() + 1;
+        view.insertDocument(new Document(800, 600), index);
+        view.getImageTabs().setSelectedIndex(index);
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
 
 public class OpenFileAction extends MenuBarAction {
-  public OpenFileAction(View view) {
-    super(view, "Open...", "ctrl O");
-    setEnabled(true);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    File file = promptFile(true);
-    if (file == null) return;
-    int index = view.getImageTabs().getSelectedIndex() + 1;
-    view.insertDocument(new Document(file), index);
-    view.getImageTabs().setSelectedIndex(index);
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
+    public OpenFileAction(View view) {
+        super(view, "Open...", "ctrl O");
+        setEnabled(true);
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        File file = promptFile(true);
+        if (file == null) return;
+        int index = view.getImageTabs().getSelectedIndex() + 1;
+        view.insertDocument(new Document(file), index);
+        view.getImageTabs().setSelectedIndex(index);
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
 
 public class SaveAction extends MenuBarAction {
-  private Document document;
-
-  public SaveAction(View view, Document document) {
-    super(view, "Save", "ctrl S");
-    this.document = document;
-  }
-
-  public SaveAction(View view) {
-    this(view, null);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    Document doc = document == null ? view.getSelectedDocument() : document;
-    if (!doc.isLinked()) {
-      new SaveAsAction(view, doc).execute();
-      return;
+    private Document document;
+    
+    public SaveAction(View view, Document document) {
+        super(view, "Save", "ctrl S");
+        this.document = document;
     }
-    File file = doc.getLinkedFile();
-    try {
-      ImageIO.write(doc.flattened(), "png", file);
-      throw new IOException();
-    } catch (IOException ioex) {
-      JOptionPane.showMessageDialog(null, "Something went wrong when trying to save your file.", "Error", JOptionPane.ERROR_MESSAGE);
+    
+    public SaveAction(View view) {
+        this(view, null);
     }
-    doc.setSaved(true);
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Document doc = document == null ? view.getSelectedDocument() : document;
+        if (!doc.isLinked()) {
+            new SaveAsAction(view, doc).execute();
+            return;
+        }
+        File file = doc.getLinkedFile();
+        try {
+            ImageIO.write(doc.flattened(), "png", file);
+            throw new IOException();
+        } catch(IOException ioex) {
+            JOptionPane.showMessageDialog(null, "Something went wrong when trying to save your file.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        doc.setSaved(true);
+    }
 }
 
 public class SaveAsAction extends MenuBarAction {
-  private Document document;
-
-  public SaveAsAction(View view, Document document) {
-    super(view, "Save As...", "ctrl shift S");
-    this.document = document;
-  }
-
-  public SaveAsAction(View view) {
-    this(view, null);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    Document doc = document == null ? view.getSelectedDocument() : document;
-    File file = promptFile(false);
-    if (file == null) return;
-    doc.setLinkedFile(file);
-    new SaveAction(view, doc).execute();
-  }
+    private Document document;
+    
+    public SaveAsAction(View view, Document document) {
+        super(view, "Save As...", "ctrl shift S");
+        this.document = document;
+    }
+    
+    public SaveAsAction(View view) {
+        this(view, null);
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Document doc = document == null ? view.getSelectedDocument() : document;
+        File file = promptFile(false);
+        if (file == null) return;
+        doc.setLinkedFile(file);
+        new SaveAction(view, doc).execute();
+    }
 }
 
 public class CloseFileAction extends MenuBarAction {
-  private final String[] options = {"Save", "Don't Save", "Cancel"};
-  private final int SAVE = 0, DONT_SAVE = 1, CANCEL = 2;
-  private int index;
-  private int response = 2;
-
-  public CloseFileAction(View view, int index) {
-    super(view, "Close", "ctrl W");
-    this.index = index;
-  }
-
-  public CloseFileAction(View view) {
-    this(view, -1);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    int i = index == -1 ? view.getImageTabs().getSelectedIndex() : index;
-    JTabbedPane imageTabs = view.getImageTabs();
-    DocumentView docView = (DocumentView) imageTabs.getComponentAt(i);
-    if (!docView.getDocument().isSaved()) {
-      response = JOptionPane.showOptionDialog(view.getFrame(),
-        String.format("Save changes to \"%s\" before closing?", docView.getDocument().getName()),
-        "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
-      switch(response) {
-        case CANCEL: return;
-        case SAVE: new SaveAction(view, docView.getDocument()).execute();
-      }
-    } else {response = SAVE;}
-    imageTabs.remove(i);
-  }
-
-  public boolean getSuccess() {
-    return response != CANCEL;
-  }
-}
-
-public class CloseAllAction extends MenuBarAction {
-  public CloseAllAction(View view) {
-    super(view, "Close All", "ctrl alt W");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    final JTabbedPane imageTabs = view.getImageTabs();
-    final int tabCount = imageTabs.getTabCount();
-    for(int i = tabCount - 1; i >= 0; i--) {
-      imageTabs.setSelectedIndex(i);
-      CloseFileAction closeFileAction = new CloseFileAction(view, i);
-      closeFileAction.execute();
-      if (!closeFileAction.getSuccess()) {
-        break;
-      }
+    private final String[] options = {"Save", "Don't Save", "Cancel"};
+    private final int SAVE = 0, DONT_SAVE = 1, CANCEL = 2;
+    private int index;
+    private int response = 2;
+    
+    public CloseFileAction(View view, int index) {
+        super(view, "Close", "ctrl W");
+        this.index = index;
     }
-  }
-}
-
-public class CloseOtherAction extends MenuBarAction {
-  public CloseOtherAction(View view) {
-    super(view, "Close Others", "ctrl alt P");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    final JTabbedPane imageTabs = view.getImageTabs();
-    final int tabCount = imageTabs.getTabCount();
-    final int selected = imageTabs.getSelectedIndex();
-    for(int i = tabCount - 1; i >= 0; i--) {
-      if (i == selected) continue;
-      imageTabs.setSelectedIndex(i);
-      CloseFileAction closeFileAction = new CloseFileAction(view, i);
-      closeFileAction.execute();
-      if (!closeFileAction.getSuccess()) {
-        break;
-      }
+    
+    public CloseFileAction(View view) {
+        this(view, - 1);
     }
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int i = index == - 1 ? view.getImageTabs().getSelectedIndex() : index;
+        JTabbedPane imageTabs = view.getImageTabs();
+        DocumentView docView = (DocumentView) imageTabs.getComponentAt(i);
+        if (!docView.getDocument().isSaved()) {
+            response = JOptionPane.showOptionDialog(view.getFrame(),
+                String.format("Save changes to \" % s\" before closing?", docView.getDocument().getName()),
+                "Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[SAVE]);
+            
+            switch(response) {
+                case CANCEL: return;
+                case SAVE: new SaveAction(view, docView.getDocument()).execute();
+            }
+        } else {
+            response = SAVE;
+        }
+        
+        imageTabs.remove(i);
+    }
 
-  @Override
-  public boolean isEnabled() {
-    if (view.getImageTabs() == null) return false;
-    return view.getImageTabs().getTabCount() > 1;
-  }
+        public boolean getSuccess() {
+                return response != CANCEL;
+            }
+        }
+        
+        public class CloseAllAction extends MenuBarAction {
+            public CloseAllAction(View view) {
+                super(view, "Close All", "ctrl alt W");
+            }
+            
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final JTabbedPane imageTabs = view.getImageTabs();
+                final int tabCount = imageTabs.getTabCount();
+                for (int i = tabCount - 1; i >= 0; i--) {
+                    imageTabs.setSelectedIndex(i);
+                    CloseFileAction closeFileAction = new CloseFileAction(view, i);
+                    closeFileAction.execute();
+                    if (!closeFileAction.getSuccess()) {
+                        break;
+                }
+            }
+        }
+    }
+    
+    public class CloseOtherAction extends MenuBarAction {
+        public CloseOtherAction(View view) {
+            super(view, "Close Others", "ctrl alt P");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final JTabbedPane imageTabs = view.getImageTabs();
+            final int tabCount = imageTabs.getTabCount();
+            final int selected = imageTabs.getSelectedIndex();
+            for (int i = tabCount - 1; i >= 0; i--) {
+                if (i == selected) continue;
+                imageTabs.setSelectedIndex(i);
+                CloseFileAction closeFileAction = new CloseFileAction(view, i);
+                closeFileAction.execute();
+                if (!closeFileAction.getSuccess()) {
+                    break;
+            }
+        }
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        if (view.getImageTabs() == null) return false;
+        return view.getImageTabs().getTabCount() > 1;
+    }
 }
 
 public class PrintAction extends MenuBarAction {
-  Document doc;
-
-  public PrintAction(View view) {
-    this(view, null);
-  }
-
-  public PrintAction(View view, Document doc) {
-    super(view, "Print...", "ctrl P");
-    this.doc = doc;
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    if (doc == null) doc = view.getSelectedDocument();
-    if (doc == null) return;
-    PrinterJob printJob = PrinterJob.getPrinterJob();
-    printJob.setPrintable(new PrintableImage(printJob, doc.flattened()));
-    if (printJob.printDialog()) {
-      try {
-        printJob.print();
-      } catch (PrinterException prt) {
-        prt.printStackTrace();
-      }
+    Document doc;
+    
+    public PrintAction(View view) {
+        this(view, null);
     }
-  }
-
-  public class PrintableImage implements Printable {
-    private double x, y, width;
-    private int orientation;
-    private BufferedImage image;
-
-    public PrintableImage(PrinterJob printJob, BufferedImage image) {
-      PageFormat pageFormat = printJob.defaultPage();
-      this.x = pageFormat.getImageableX();
-      this.y = pageFormat.getImageableY();
-      this.width = pageFormat.getImageableWidth();
-      this.orientation = pageFormat.getOrientation();
-      this.image = image;
+    
+    public PrintAction(View view, Document doc) {
+        super(view, "Print...", "ctrl P");
+        this.doc = doc;
     }
-
+    
     @Override
-    public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
-      if (pageIndex == 0) {
-        int pWidth = 0;
-        int pHeight = 0;
-        if (orientation == PageFormat.PORTRAIT) {
-          pWidth = (int) Math.min(width, (double) image.getWidth());
-          pHeight = pWidth * image.getHeight() / image.getWidth();
-        } else {
-          pHeight = (int) Math.min(width, (double) image.getHeight());
-          pWidth = pHeight * image.getWidth() / image.getHeight();
+    public void actionPerformed(ActionEvent e) {
+        if (doc == null) doc = view.getSelectedDocument();
+        if (doc == null) return;
+        PrinterJob printJob = PrinterJob.getPrinterJob();
+        printJob.setPrintable(new PrintableImage(printJob, doc.flattened()));
+        if (printJob.printDialog()) {
+            try {
+                printJob.print();
+            } catch(PrinterException prt) {
+                prt.printStackTrace();
+            }
         }
-        g.drawImage(image, (int) x, (int) y, pWidth, pHeight, null);
-        return PAGE_EXISTS;
-      } else {
-        return NO_SUCH_PAGE;
-      }
     }
-  }
+    
+    public class PrintableImage implements Printable {
+        private double x, y, width;
+        private int orientation;
+        private BufferedImage image;
+        
+        public PrintableImage(PrinterJob printJob, BufferedImage image) {
+            PageFormat pageFormat = printJob.defaultPage();
+            this.x = pageFormat.getImageableX();
+            this.y = pageFormat.getImageableY();
+            this.width = pageFormat.getImageableWidth();
+            this.orientation = pageFormat.getOrientation();
+            this.image = image;
+        }
+        
+        @Override
+        public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+            if (pageIndex == 0) {
+                int pWidth = 0;
+                int pHeight = 0;
+                if (orientation == PageFormat.PORTRAIT) {
+                    pWidth = (int) Math.min(width,(double) image.getWidth());
+                    pHeight = pWidth * image.getHeight() / image.getWidth();
+                } else {
+                    pHeight = (int) Math.min(width,(double) image.getHeight());
+                    pWidth = pHeight * image.getWidth() / image.getHeight();
+                }
+                g.drawImage(image,(int) x,(int) y, pWidth, pHeight, null);
+                return PAGE_EXISTS;
+            } else {
+                return NO_SUCH_PAGE;
+            }
+        }
+    }
 }
 
 public class ExitAction extends MenuBarAction {
-  public ExitAction(View view) {
-    super(view, "Exit", "ctrl Q");
-    setEnabled(true);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    new CloseAllAction(view).execute();
-    if (view.getImageTabs().getTabCount() == 0) {
-      forceExit();
+    public ExitAction(View view) {
+        super(view, "Exit", "ctrl Q");
+        setEnabled(true);
     }
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        new CloseAllAction(view).execute();
+        if (view.getImageTabs().getTabCount() == 0) {
+            forceExit();
+        }
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
 //Edit Menu Actions
 public class UndoAction extends MenuBarAction {
-  public UndoAction(View view) {
-    super(view, "Undo", "ctrl Z");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    view.getSelectedDocumentView().snapShotManager.undo();
-    view.getLayerListView().update();
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return super.isEnabled() && view.getSelectedDocumentView().snapShotManager.ableToUndo();
-  }
+    public UndoAction(View view) {
+        super(view, "Undo", "ctrl Z");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        view.getSelectedDocumentView().snapShotManager.undo();
+        view.getLayerListView().update();
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return super.isEnabled() && view.getSelectedDocumentView().snapShotManager.ableToUndo();
+    }
 }
 
 public class RedoAction extends MenuBarAction {
-  public RedoAction(View view) {
-    super(view, "Redo", "ctrl shift Z");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    view.getSelectedDocumentView().getSnapShotManager().redo();
-    view.getLayerListView().update();
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return super.isEnabled() && view.getSelectedDocumentView().getSnapShotManager().ableToRedo();
-  }
+    public RedoAction(View view) {
+        super(view, "Redo", "ctrl shift Z");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        view.getSelectedDocumentView().getSnapShotManager().redo();
+        view.getLayerListView().update();
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return super.isEnabled() && view.getSelectedDocumentView().getSnapShotManager().ableToRedo();
+    }
 }
-
 
 
 //View Menu Actions
 public class ZoomInAction extends MenuBarAction {
-  Point2D pos;
-  public ZoomInAction(View view) {
-    super(view, "Zoom In", KeyStroke.getKeyStroke('=', InputEvent.CTRL_DOWN_MASK));
-  }
-  public void setPosition(Point2D pos) {
-    this.pos = pos;
-  }
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    DocumentView docView = view.getSelectedDocumentView();
-    final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
-    int previousIndex = 0;
-    float scale = docView.getScale();
-
-    for(int i = 0; i < ZOOM_TABLE.length; i++) {
-      if (ZOOM_TABLE[i] <= scale * 100) previousIndex = i;
+    Point2D pos;
+    
+    public ZoomInAction(View view) {
+        super(view, "Zoom In", KeyStroke.getKeyStroke('=', InputEvent.CTRL_DOWN_MASK));
     }
-    if (!(previousIndex + 1 < ZOOM_TABLE.length)) return;
-    float newScale = ZOOM_TABLE[previousIndex + 1] / 100;
-    if (pos == null) {
-      docView.setScale(newScale);
-    } else {
-      pos.setLocation(pos.getX() * scale, pos.getY() * scale);
-      docView.setScale(newScale, pos);
-      pos = null;
+    
+    public void setPosition(Point2D pos) {
+        this.pos = pos;
     }
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        DocumentView docView = view.getSelectedDocumentView();
+        final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
+        int previousIndex = 0;
+        float scale = docView.getScale();
+        
+        for (int i = 0; i < ZOOM_TABLE.length; i++) {
+            if (ZOOM_TABLE[i] <= scale * 100) previousIndex = i;
+        }
+        if (!(previousIndex + 1 < ZOOM_TABLE.length)) return;
+        float newScale = ZOOM_TABLE[previousIndex + 1] / 100;
+        if (pos == null) {
+            docView.setScale(newScale);
+        } else {
+            pos.setLocation(pos.getX() * scale, pos.getY() * scale);
+            docView.setScale(newScale, pos);
+            pos = null;
+        }
+    }
 }
 
 public class ZoomOutAction extends MenuBarAction {
-  Point2D pos;
-  public ZoomOutAction(View view) {
-    super(view, "Zoom Out", KeyStroke.getKeyStroke('-', InputEvent.CTRL_DOWN_MASK));
-  }
-  public void setPosition(Point2D pos) {
-    this.pos = pos;
-  }
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    DocumentView docView = view.getSelectedDocumentView();
-    final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
-    int previousIndex = 0;
-    float scale = docView.getScale();
-
-    for(int i = 0; i < ZOOM_TABLE.length; i++) {
-      if (ZOOM_TABLE[i] < scale * 100) previousIndex = i;
+    Point2D pos;
+    
+    public ZoomOutAction(View view) {
+        super(view, "Zoom Out", KeyStroke.getKeyStroke('-', InputEvent.CTRL_DOWN_MASK));
     }
-    if (previousIndex < 1) return;
-    float newScale = ZOOM_TABLE[previousIndex - 1] / 100;
-    if (pos == null) {
-      docView.setScale(newScale);
-    } else {
-      pos.setLocation(pos.getX() * scale, pos.getY() * scale);
-      docView.setScale(newScale, pos);
-      pos = null;
+    
+    public void setPosition(Point2D pos) {
+        this.pos = pos;
     }
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        DocumentView docView = view.getSelectedDocumentView();
+        final float[] ZOOM_TABLE = docView.ZOOM_TABLE;
+        int previousIndex = 0;
+        float scale = docView.getScale();
+        
+        for (int i = 0; i < ZOOM_TABLE.length; i++) {
+            if (ZOOM_TABLE[i] < scale * 100) previousIndex = i;
+        }
+        if (previousIndex < 1) return;
+        float newScale = ZOOM_TABLE[previousIndex - 1] / 100;
+        if (pos == null) {
+            docView.setScale(newScale);
+        } else {
+            pos.setLocation(pos.getX() * scale, pos.getY() * scale);
+            docView.setScale(newScale, pos);
+            pos = null;
+        }
+    }
 }
 
 public class ZoomToWindowAction extends MenuBarAction {
-  public ZoomToWindowAction(View view) {
-    super(view, "Zoom to Window", "ctrl B");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    DocumentView docView = view.getSelectedDocumentView();
-    Document doc = docView.getDocument();
-    Dimension extentSize = docView.getViewport().getExtentSize();
-    docView.setScale(Math.min(
-      (float)extentSize.width/doc.getWidth(),
-      (float)extentSize.height/doc.getHeight()
-    ));
-  }
+    public ZoomToWindowAction(View view) {
+        super(view, "Zoom to Window", "ctrl B");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        DocumentView docView = view.getSelectedDocumentView();
+        Document doc = docView.getDocument();
+        Dimension extentSize = docView.getViewport().getExtentSize();
+        docView.setScale(Math.min(
+           (float)extentSize.width / doc.getWidth(),
+           (float)extentSize.height / doc.getHeight()
+           ));
+    }
 }
 
 public class ZoomToSelectionAction extends MenuBarAction {
-  public ZoomToSelectionAction(View view) {
-    super(view, "Zoom to Selection", "ctrl shift B");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    DocumentView docView = view.getSelectedDocumentView();
-    Rectangle selected = docView.getSelection().getBounds();
-    Dimension extentSize = docView.getViewport().getExtentSize();
-    docView.setScale(Math.min(
-      (float)extentSize.width/(float)selected.width,
-      (float)extentSize.height/(float)selected.height
-    ));
-
-    Rectangle scaledSelection = docView.getScaledSelection().getBounds();
-    docView.getViewport().setViewPosition(new Point(
-      scaledSelection.x - (extentSize.width - scaledSelection.width) / 2,
-      scaledSelection.y - (extentSize.height - scaledSelection.height) / 2));
-  }
-  @Override
-  public boolean isEnabled() {
-    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
-  }
+    public ZoomToSelectionAction(View view) {
+        super(view, "Zoom to Selection", "ctrl shift B");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        DocumentView docView = view.getSelectedDocumentView();
+        Rectangle selected = docView.getSelection().getBounds();
+        Dimension extentSize = docView.getViewport().getExtentSize();
+        docView.setScale(Math.min(
+           (float)extentSize.width / (float)selected.width,
+           (float)extentSize.height / (float)selected.height
+           ));
+        
+        Rectangle scaledSelection = docView.getScaledSelection().getBounds();
+        docView.getViewport().setViewPosition(new Point(
+            scaledSelection.x - (extentSize.width - scaledSelection.width) / 2,
+            scaledSelection.y - (extentSize.height - scaledSelection.height) / 2));
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
+    }
 }
 
 public class ActualSizeAction extends MenuBarAction {
-  public ActualSizeAction(View view) {
-    super(view, "Actual Size", "ctrl 0");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    view.getSelectedDocumentView().setScale(1.0f);
-  }
+    public ActualSizeAction(View view) {
+        super(view, "Actual Size", "ctrl 0");
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        view.getSelectedDocumentView().setScale(1.0f);
+    }
 }
 
 public class TogglePixelGrid extends MenuBarAction {
-  public TogglePixelGrid(View view) {
-    super(view, "Turn Pixel Grid On");
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    boolean pixelGridEnabled = !view.isPixelGridEnabled();
-    view.setPixelGridEnabled(pixelGridEnabled);
-    if(pixelGridEnabled) {
-      putValue(NAME, "Turn Pixel Grid Off");
-    } else {
-      putValue(NAME, "Turn Pixel Grid On");
+    public TogglePixelGrid(View view) {
+        super(view, "Turn Pixel Grid On");
     }
-  }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        boolean pixelGridEnabled = !view.isPixelGridEnabled();
+        view.setPixelGridEnabled(pixelGridEnabled);
+        if (pixelGridEnabled) {
+            putValue(NAME, "Turn Pixel Grid Off");
+        } else {
+            putValue(NAME, "Turn Pixel Grid On");
+        }
+    }
 }
