@@ -1,3 +1,82 @@
+public abstract class ToolAction extends AbstractAction {
+  protected String name;
+  protected DragGesture dragState = new DragGesture();
+  protected Point2D start, last, current;
+  protected DocumentView docView;
+  protected Document doc;
+  protected Set buttons;
+  protected Layer selectedLayer;
+  protected ColorSelector selector;
+  protected Rectangle imageRect;
+  protected String toolTip;
+  View view;
+
+  ToolAction(String name, String toolIconName, View view) {
+    this.name = name;
+    this.view = view;
+    toolTip = name;
+    putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
+  }
+  public String getName() {
+    return name;
+  }
+
+  public String getToolTip() {
+    return toolTip;
+  }
+
+  public ImageIcon getIcon() {
+    return (ImageIcon) getValue(Action.SMALL_ICON);
+  }
+
+  public void actionPerformed(ActionEvent e) {
+    if (!view.hasSelectedDocument()) return;
+    DocumentView docView = view.getSelectedDocumentView();
+    docView.setToolTipIcon((ImageIcon) getValue(Action.SMALL_ICON));
+    docView.setToolTipText(toolTip);
+  }
+
+  public DragGesture getDragState() {
+    return dragState;
+  }
+
+  public void dragStarted() {}
+
+  public void dragging() {}
+
+  public void initVars() {
+    start = dragState.getStart();
+    current = dragState.getCurrent();
+    last = dragState.getLast();
+    buttons = dragState.getButtons();
+    docView = view.getSelectedDocumentView();
+    doc = docView.getDocument();
+    selectedLayer = docView.getSelectedLayer();
+    selector = view.getToolBar().getColorSelector();
+    imageRect = new Rectangle(0, 0, doc.getWidth(), doc.getHeight());
+  }
+
+  public void dragEnded() {
+  }
+
+  public void click(Point2D pos, int button) {}
+
+  protected void updateDocument() {
+    docView.getDocument().updateFlattenedCache();
+    docView.getCanvas().repaint();
+    doc.setSaved(false);
+    view.getLayerListView().update();
+  }
+
+  protected Color getSelectedColor() {
+    if (buttons.contains(MouseEvent.BUTTON1))
+      return selector.getPrimary();
+    if (buttons.contains(MouseEvent.BUTTON3))
+      return selector.getSecondary();
+    return null;
+  }
+}
+
 class DragGesture {
   private Point2D start = new Point2D.Double(), last = new Point2D.Double(), current = new Point2D.Double(), end = new Point2D.Double();
   private boolean dragging = false;
@@ -55,90 +134,21 @@ class DragGesture {
   }
 }
 
-public abstract class ToolAction extends AbstractAction {
-  protected String name;
-  protected DragGesture dragState = new DragGesture();
-  protected Point2D start, last, current;
-  protected DocumentView docView;
-  protected Document doc;
-  protected Set buttons;
-  protected Layer selectedLayer;
-  protected ColorSelector selector;
-  protected Rectangle imageRect;
-  private String toolTip;
-  View view;
-
-  ToolAction(String name, String toolIconName, View view) {
-    this.name = name;
-    this.view = view;
-    toolTip = name;
-    putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
-  }
-  public String getName() {
-    return name;
-  }
-  protected void setToolTip(String toolTip) {
-    this.toolTip = toolTip;
-  }
-  public String getToolTip() {
-    return toolTip;
-  }
-
-  public ImageIcon getIcon() {
-    return (ImageIcon) getValue(Action.SMALL_ICON);
-  }
-
-  public void actionPerformed(ActionEvent e) {
-    if (view.hasSelectedDocument()) {
-      ImageIcon icon = (ImageIcon) getValue(Action.SMALL_ICON);
-      view.getSelectedDocumentView().setToolTipIcon(icon);
-    }
-  }
-
-  public DragGesture getDragState() {
-    return dragState;
-  }
-
-  public void dragStarted() {}
-
-  public void dragging() {}
-
-  public void initVars() {
-    start = dragState.getStart();
-    current = dragState.getCurrent();
-    last = dragState.getLast();
-    buttons = dragState.getButtons();
-    docView = view.getSelectedDocumentView();
-    doc = docView.getDocument();
-    selectedLayer = docView.getSelectedLayer();
-    selector = view.getToolBar().getColorSelector();
-    imageRect = new Rectangle(0, 0, doc.getWidth(), doc.getHeight());
-  }
-
-  public void dragEnded() {
-  }
-
-  public void click(Point2D pos, int button) {}
-
-  protected void updateDocument() {
-    docView.getDocument().updateFlattenedCache();
-    docView.getCanvas().repaint();
-    doc.setSaved(false);
-    view.getLayerListView().update();
-  }
-
-  protected Color getSelectedColor() {
-    if (buttons.contains(MouseEvent.BUTTON1))
-      return selector.getPrimary();
-    if (buttons.contains(MouseEvent.BUTTON3))
-      return selector.getSecondary();
-    return null;
-  }
-}
 
 public class MoveAction extends ToolAction {
+  BufferedImage original;
+  BufferedImage crop;
+
   MoveAction(View view) {
     super("Move Tool", "move.png", view);
+  }
+  public void dragStarted() {
+    DocumentView docView = view.getSelectedDocumentView();
+    Shape selection = docView.getSelection();
+    Rectangle bounds = selection.getBounds();
+
+    original = docView.getSelectedLayer().getImage();
+    crop = original.getSubimage(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
   public void dragging() {
@@ -146,6 +156,90 @@ public class MoveAction extends ToolAction {
   }
 
   public void dragEnded() {
+  }
+}
+
+public class LassoAction extends SelectAction {
+  Path2D.Double selection;
+
+  LassoAction(View view) {
+    super("Lasso Tool", "lasso.png", view);
+  }
+  
+  public void dragStarted() {
+    Point2D start = dragState.getStart();
+    selection = new Path2D.Double();
+    selection.moveTo(start.getX(), start.getY());
+  }
+
+  public void dragging() {
+    super.initVars();
+    if (!dragState.isDragging()) return; //check if just a click
+
+    if(current.distance(last) > 0.01)
+      selection.lineTo(current.getX(), current.getY());
+
+    Path2D.Double closedSelection = (Path2D.Double)selection.clone();
+    closedSelection.closePath();
+
+    docView.setSelection(closedSelection);
+  }
+
+  @Override
+  public void click(Point2D pos, int button) {
+    docView = view.getSelectedDocumentView();
+    docView.setSelection(null);
+  }
+}
+public class PolygonalLassoTool extends ToolAction {
+  Path2D.Double selection;
+
+  PolygonalLassoTool(View view) {
+    super("Polygonal Lasso Tool", "polygonallasso.png", view);
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    selection = null;
+    super.actionPerformed(e);
+  }
+
+  @Override
+  public void dragStarted() {
+    if(selection != null) return;
+    Point2D start = dragState.getStart();
+    selection = new Path2D.Double();
+    selection.moveTo(start.getX(), start.getY());
+    view.getSelectedDocumentView().setSelection(null);
+  }
+
+  @Override
+  public void dragging() {
+    super.initVars();
+    Path2D.Double selection2 = selection;
+    if (!pressedKeys.contains(KeyEvent.VK_ALT)) selection2 = (Path2D.Double)selection.clone();
+
+    if(current.distance(last) > 0.01)
+      selection2.lineTo(current.getX(), current.getY());
+
+    docView.setSelection(selection2);
+  }
+
+  public void dragEnded() {
+    click(current, buttons.contains(MouseEvent.BUTTON3) ? MouseEvent.BUTTON3: MouseEvent.BUTTON1);
+  }
+
+  @Override
+  public void click(Point2D pos, int button) {
+    DocumentView docView = view.getSelectedDocumentView();
+    selection.lineTo(pos.getX(), pos.getY());
+    if (button == MouseEvent.BUTTON3) {
+      selection.closePath();
+      docView.setSelection(selection);
+      selection = null;
+    } else {
+      docView.setSelection(selection);
+    }
   }
 }
 
@@ -154,18 +248,27 @@ public class SelectAction extends ToolAction {
     super("Rectangle Select Tool", "select.png", view);
   }
 
+  SelectAction(String name, String toolIconName, View view) {
+    //used for crop tool
+    super(name, toolIconName, view);
+  }
+
   public void dragging() {
     super.initVars();
     if (!dragState.isDragging()) return; //check if just a click
 
+
     int startX = (int) start.getX();
     int startY = (int) start.getY();
-    int width = (int)current.getX() - startX + 1;
-    int height = (int)current.getY() - startY + 1;
+    int width = (int)current.getX() - startX;
+    int height = (int)current.getY() - startY;
+
+    if(pressedKeys.contains(KeyEvent.VK_SHIFT))
+      width = height = Math.min(width, height);
 
     Rectangle selection = new Rectangle(
-      startX + (width <= 0 ? --width : 0),
-      startY + (height <= 0 ? --height: 0),
+      startX + (width < 0 ? width : 0),
+      startY + (height < 0 ? height: 0),
       Math.abs(width),
       Math.abs(height))
       .intersection(imageRect);
@@ -179,34 +282,31 @@ public class SelectAction extends ToolAction {
     docView = view.getSelectedDocumentView();
     docView.setSelection(null);
   }
+
+  @Override
+  public String getToolTip() {
+    if (docView == null || !docView.hasSelection()) return toolTip;
+    Rectangle selection = docView.getSelection().getBounds();
+    return String.format(
+      "Selection top left: %d, %d. Bounding rectangle size: %d, %d. Area: %d pixels squared",
+      selection.x, selection.y, 
+      selection.width, selection.height,
+      selection.width * selection.height
+    );
+  }
 }
 
-public class CropAction extends ToolAction {
+public class CropAction extends SelectAction {
   CropAction(View view) {
     super("Crop Tool", "crop.png", view);
   }
+
   public void dragStarted() {
     view.getSelectedDocumentView().snapShotManager.save();
   }
-  public void dragging() {
-    super.initVars();
-    if (!dragState.isDragging()) return; //check if just a click
+  
+  public void click(Point2D pos, int button) {}
 
-    int startX = (int) start.getX();
-    int startY = (int) start.getY();
-    int width = (int)current.getX() - startX + 1;
-    int height = (int)current.getY() - startY + 1;
-
-    Rectangle selection = new Rectangle(
-      startX + (width <= 0 ? --width : 0),
-      startY + (height <= 0 ? --height: 0),
-      Math.abs(width),
-      Math.abs(height))
-      .intersection(imageRect);
-
-    if (selection.height == 0 || selection.width == 0) return;
-    docView.setSelection(selection);
-  }
   public void dragEnded() {
     doc.crop(docView.getSelection().getBounds());
     docView.setSelection(null);
@@ -355,13 +455,23 @@ public class PanAction extends ToolAction {
   }
 }
 
-public class ZoomAction extends ToolAction {
+public class ZoomAction extends SelectAction {
   ZoomInAction zoomInAction;
   ZoomOutAction zoomOutAction;
+  ZoomToSelectionAction zoomToSelectionAction;
+  Shape selection;
+
   ZoomAction(View view){
     super("Zoom Tool", "zoom.png", view);
     zoomInAction = new ZoomInAction(view);
     zoomOutAction = new ZoomOutAction(view);
+    zoomToSelectionAction = new ZoomToSelectionAction(view);
+  }
+
+  public void dragStarted() {
+    DocumentView docView = view.getSelectedDocumentView();
+    this.selection = docView.hasSelection() ? docView.getSelection() : null;
+    docView.setSelection(null);
   }
 
   public void click(Point2D pos, int button) {
@@ -375,5 +485,10 @@ public class ZoomAction extends ToolAction {
         zoomOutAction.execute();
         break;
     }
+  }
+  public void dragEnded() {
+    if (!docView.hasSelection()) return;
+    zoomToSelectionAction.execute();
+    docView.setSelection(selection);
   }
 }

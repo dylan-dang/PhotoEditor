@@ -9,12 +9,12 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
   private JSpinner opacitySpinner;
   private JPanel layerActionsPanel;
   private LayerAction[] layerActions = new LayerAction[] {
-    new addEmptyLayer(this),
-    new RemoveLayer(this),
-    new DuplicateLayer(this),
-    new MergeLayer(this),
-    new MoveUpLayer(this),
-    new MoveDownLayer(this)
+    new AddEmptyLayerAction(this),
+    new RemoveLayerAction(this),
+    new DuplicateLayerAction(this),
+    new MergeLayerAction(this),
+    new MoveUpLayerAction(this),
+    new MoveDownLayerAction(this)
   };
 
   public LayerListView(final View view) {
@@ -83,7 +83,7 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
 
     //LAYER LIST
     layerList = new JPanel(new GridBagLayout());
-    layerList.setBackground(new Color(0x333333)); //probably shouldn't hardcode this but oh well
+    layerList.setBackground(view.CONTENT_BACKGROUND);
     JScrollPane scrollPane = new JScrollPane(layerList);
     add(scrollPane);
 
@@ -100,6 +100,11 @@ public class LayerListView extends JPanel implements ChangeListener, ActionListe
       button.setBorderPainted(false);
       button.setBackground(null);
       button.setOpaque(false);
+      button.setFocusable(false);
+      UIDefaults def = new UIDefaults();
+      def.put("Button[Disabled].backgroundPainter", DrawHelper.EMPTY_PAINTER);
+      def.put("Button[Enabled].backgroundPainter", DrawHelper.EMPTY_PAINTER);
+      button.putClientProperty("Nimbus.Overrides", def);
       layerActionsPanel.add(button);
     }
 
@@ -243,25 +248,31 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
   private final ImageIcon VISIBLE = new ImageIcon(sketchPath("resources/layers/visible.png"));
   private final ImageIcon INVISIBLE = new ImageIcon(sketchPath("resources/layers/invisible.png"));
   JToggleButton visibilityButton;
-  private final int MAXLENGTH = 54;
+  private final int MAXLENGTH = 38;
 
   LayerView(LayerListView parent, Layer layer) {
     this.parent = parent;
     this.layer = layer;
     setLayout(new BorderLayout());
 
+    /*
     setBorder(BorderFactory.createCompoundBorder(
       BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY),
       BorderFactory.createEmptyBorder(6, 6, 6, 6)
     ));
+    */
+
+    this.setFocusable(false);
+    this.setRolloverEnabled(false);
     addActionListener(this);
 
-    layerLabel.setPreferredSize(new Dimension(64, 32));
+    layerLabel.setPreferredSize(new Dimension(64, 40));
     update();
     add(layerLabel);
 
     visibilityButton = new JToggleButton(INVISIBLE, layer.isVisible());
     visibilityButton.setSelectedIcon(VISIBLE);
+    visibilityButton.setRolloverEnabled(false);
     visibilityButton.addItemListener(this);
     visibilityButton.setPreferredSize(new Dimension(24, 24));
     visibilityButton.setContentAreaFilled(false);

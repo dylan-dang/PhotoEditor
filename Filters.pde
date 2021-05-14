@@ -2,30 +2,38 @@
 public abstract class FilterAction extends MenuBarAction {
   protected BufferedImage image;
   protected int[] pixels;
+
   FilterAction(View view, String name) {
     super(view, name);
   }
+
   @Override
   public void actionPerformed(ActionEvent e) {
     image = view.getSelectedDocumentView().getSelectedLayer().getImage();
     pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
     view.getSelectedDocumentView().save();
   }
+  
   protected int alpha(int argb) {
     return (argb >> 24) & 0xFF;
   }
+
   protected int red(int argb) {
     return (argb >> 16) & 0xFF;
   }
+
   protected int green(int argb) {
     return (argb >> 8) & 0xFF;
   }
+
   protected int blue(int argb) {
     return argb & 0xFF;
   }
+
   protected int getColor(int a, int r, int g, int b) {
     return a<<24 | r<<16 | g<<8 | b;
   }
+  
   protected void update() {
     view.getSelectedDocument().updateFlattenedCache();
     view.getSelectedDocumentView().getCanvas().repaint();

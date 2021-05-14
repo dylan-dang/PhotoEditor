@@ -1,6 +1,7 @@
 private abstract class MenuBarAction extends AbstractAction {
   protected View view;
-  private File file; //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
+  private File file; 
+  //hacky, i know. but i wouldn't be able to reference it in promptFile() and i can't make it final.
 
   public MenuBarAction(View view, String name, Object accelerator) {
     this.view = view;
@@ -10,7 +11,6 @@ private abstract class MenuBarAction extends AbstractAction {
     if (accelerator instanceof String) acc = KeyStroke.getKeyStroke((String)accelerator);
     if (acc == null) return;
     putValue(ACCELERATOR_KEY, acc);
-    //setEnabled(false);
   }
 
   public MenuBarAction(View view, String name) {
@@ -55,6 +55,17 @@ private abstract class MenuBarAction extends AbstractAction {
   @Override
   public boolean isEnabled() {
     return view.hasSelectedDocument();
+  }
+
+  protected void updateDocView() {
+    DocumentView docView = view.getSelectedDocumentView();
+    docView.getCanvas().revalidate();
+    docView.updateImageSizeLabel();
+    view.getLayerListView().update();
+  }
+
+  protected void createSnapshot() {
+    view.getSelectedDocumentView().snapShotManager.save();
   }
 }
 
@@ -326,6 +337,7 @@ public class UndoAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     view.getSelectedDocumentView().snapShotManager.undo();
+    view.getSelectedDocumentView().getCanvas().revalidate();
     view.getLayerListView().update();
   }
 
@@ -352,13 +364,108 @@ public class RedoAction extends MenuBarAction {
   }
 }
 
+public class EraseSelectionAction extends MenuBarAction {
+  public EraseSelectionAction(View view) {
+    super(view, "Erase Selection", "DELETE");
+  }
 
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    Rectangle selected = docView.getSelection().getBounds();
+    Graphics2D g = docView.getSelectedLayer().getGraphics();
+
+    createSnapshot();
+
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Clear);
+    g.fill(docView.getSelection());
+    g.setComposite(before);
+
+    view.getSelectedDocumentView().setSelection(null);
+    updateDocView();
+  }
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
+  }
+}
+
+public class FillSelectionAction extends MenuBarAction {
+  public FillSelectionAction(View view) {
+    super(view, "Fill Selection", "BACK_SPACE");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    Rectangle selected = docView.getSelection().getBounds();
+    Graphics2D g = docView.getSelectedLayer().getGraphics();
+
+    createSnapshot();
+
+    g.setPaint(view.getToolBar().getColorSelector().getPrimary());
+    g.fill(docView.getSelection());
+
+    updateDocView();
+  }
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
+  }
+}
+
+public class SelectAllAction extends MenuBarAction {
+  public SelectAllAction(View view) {
+    super(view, "Select All", "ctrl A");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    Dimension size = view.getSelectedDocument().getDimension();
+    Rectangle selection = new Rectangle(0, 0, size.width, size.height);
+    view.getSelectedDocumentView().setSelection(selection);
+  }
+}
+
+public class InvertSelectionAction extends MenuBarAction {
+  public InvertSelectionAction(View view) {
+    super(view, "Invert Selection", "ctrl I");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    Dimension size = view.getSelectedDocument().getDimension();
+    Area selection = new Area(new Rectangle(0, 0, size.width, size.height));
+
+    selection.exclusiveOr(new Area(docView.getSelection()));
+
+    docView.setSelection(selection);
+  }
+}
+
+public class DeselectAction extends MenuBarAction {
+  public DeselectAction(View view) {
+    super(view, "Deselect", "ctrl D");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    view.getSelectedDocumentView().setSelection(null);
+    updateDocView();
+  }
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
+  }
+}
 
 //View Menu Actions
 public class ZoomInAction extends MenuBarAction {
   Point2D pos;
   public ZoomInAction(View view) {
-    super(view, "Zoom In", KeyStroke.getKeyStroke('=', InputEvent.CTRL_DOWN_MASK));
+    super(view, "Zoom In", "ctrl EQUALS");
   }
   public void setPosition(Point2D pos) {
     this.pos = pos;
@@ -388,7 +495,7 @@ public class ZoomInAction extends MenuBarAction {
 public class ZoomOutAction extends MenuBarAction {
   Point2D pos;
   public ZoomOutAction(View view) {
-    super(view, "Zoom Out", KeyStroke.getKeyStroke('-', InputEvent.CTRL_DOWN_MASK));
+    super(view, "Zoom Out", "ctrl MINUS");
   }
   public void setPosition(Point2D pos) {
     this.pos = pos;
@@ -452,6 +559,7 @@ public class ZoomToSelectionAction extends MenuBarAction {
       scaledSelection.x - (extentSize.width - scaledSelection.width) / 2,
       scaledSelection.y - (extentSize.height - scaledSelection.height) / 2));
   }
+
   @Override
   public boolean isEnabled() {
     return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
@@ -483,5 +591,325 @@ public class TogglePixelGrid extends MenuBarAction {
     } else {
       putValue(NAME, "Turn Pixel Grid On");
     }
+  }
+}
+
+//Image Actions
+
+public class CropToSelectionAction extends MenuBarAction {
+  public CropToSelectionAction(View view) {
+    super(view, "Crop to Selection", "ctrl shift X");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    Document doc = view.getSelectedDocument();
+    DocumentView docView = view.getSelectedDocumentView();
+
+    createSnapshot();
+    doc.crop(docView.getSelection().getBounds());
+    docView.setSelection(null);
+
+    updateDocView();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().hasSelection();
+  }
+}
+
+public class ResizeAction extends MenuBarAction {
+  ResizeAction(View view) {
+    super(view, "Resize...", "ctrl R");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+
+  }
+}
+
+public class CanvasSizeAction extends MenuBarAction {
+  CanvasSizeAction(View view) {
+    super(view, "Canvas size...", "ctrl shift R");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    
+  }
+}
+
+public class ImageFlipHorizontalAction extends MenuBarAction {
+  ImageFlipHorizontalAction(View view) {
+    super(view, "Flip Horizontal");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    ArrayList<Layer> layers = view.getSelectedDocument().getLayers();
+
+    createSnapshot();
+    for(Layer layer: layers) {
+      layer.flipHorizontally();
+    }
+
+    updateDocView();
+  }
+}
+
+public class ImageFlipVerticalAction extends MenuBarAction {
+  ImageFlipVerticalAction(View view) {
+    super(view, "Flip Vertical");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    ArrayList<Layer> layers = view.getSelectedDocument().getLayers();
+
+    createSnapshot();
+    for(Layer layer: layers) {
+      layer.flipVertically();
+    }
+
+    updateDocView();
+  }
+}
+
+public class ImageRotate90degAction extends MenuBarAction {
+  private boolean clockwise;
+
+  ImageRotate90degAction(View view, boolean clockwise) {
+    super(view, 
+          String.format("Rotate 90° %s", clockwise ? "Clockwise": "Counter-Clockwise"), 
+          String.format("ctrl %s", clockwise ? "H" : "G"));
+    this.clockwise = clockwise;
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    Document document = view.getSelectedDocument();
+    int width = document.getWidth();
+    int height = document.getHeight();
+
+    createSnapshot();
+
+    for(Layer layer: document.getLayers()) {
+      BufferedImage rotated = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = rotated.createGraphics();
+      int center = clockwise ? (height - width) / 2 : (width - height) / 2;
+      g.translate(center, center);
+      g.rotate((clockwise ? 1 : 3) * PI / 2, height / 2, width / 2);
+      g.drawRenderedImage(layer.getImage(), null);
+      g.dispose();
+      layer.setImage(rotated);
+    }
+
+    document.setHeight(width);
+    document.setWidth(height);
+    updateDocView();
+  }
+
+}
+
+public class ImageRotate180degAction extends MenuBarAction {
+  ImageRotate180degAction(View view) {
+    super(view, "Rotate 180°", "ctrl J");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    ArrayList<Layer> layers = view.getSelectedDocument().getLayers();
+
+    createSnapshot();
+    for(Layer layer: layers) {
+      layer.rotate180deg();
+    }
+
+    updateDocView();
+  }
+}
+
+public class FlattenAction extends MenuBarAction {
+  FlattenAction(View view) {
+    super(view, "Flatten", "ctrl shift F");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    Document document = view.getSelectedDocument();
+    ArrayList<Layer> layers = document.getLayers();
+    BufferedImage flattened = document.flattened();
+
+    createSnapshot();
+
+    layers.clear();
+    layers.add(new Layer(flattened));
+
+    view.getSelectedDocumentView().setSelectedLayerIndex(0);
+    view.getLayerListView().update();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocument().getLayerCount() > 1;
+  }
+}
+
+//Layer Actions
+
+public class LayerFlipHorizontalAction extends MenuBarAction {
+  LayerFlipHorizontalAction(View view) {
+    super(view, "Flip Horizontal");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    createSnapshot();
+    view.getSelectedDocumentView().getSelectedLayer().flipHorizontally();
+    updateDocView();
+  }
+}
+
+public class LayerFlipVerticalAction extends MenuBarAction {
+  LayerFlipVerticalAction(View view) {
+    super(view, "Flip Vertical");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    createSnapshot();
+    view.getSelectedDocumentView().getSelectedLayer().flipVertically();
+    updateDocView();
+  }
+}
+
+public class LayerRotate180degAction extends MenuBarAction {
+  LayerRotate180degAction(View view) {
+    super(view, "Rotate 180°");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    createSnapshot();
+    view.getSelectedDocumentView().getSelectedLayer().rotate180deg();
+    updateDocView();
+  }
+}
+
+public class SelectTopLayerAction extends MenuBarAction {
+  SelectTopLayerAction(View view) {
+    super(view, "Go to Top Layer", "ctrl alt PAGE_UP");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    int count = view.getSelectedDocument().getLayerCount() - 1;
+    view.getSelectedDocumentView().setSelectedLayerIndex(count);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() < view.getSelectedDocument().getLayerCount() - 1;
+  }
+}
+
+public class SelectLayerAboveAction extends MenuBarAction {
+  SelectLayerAboveAction(View view) {
+    super(view, "Go to Layer Above", "alt PAGE_UP");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    if(!isEnabled()) return;
+    DocumentView docView = view.getSelectedDocumentView();
+
+    docView.setSelectedLayerIndex(docView.getSelectedLayerIndex() + 1);
+  }
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() < view.getSelectedDocument().getLayerCount() - 1;
+  }
+}
+
+public class SelectLayerBelowAction extends MenuBarAction {
+  SelectLayerBelowAction(View view) {
+    super(view, "Go to Layer Below", "alt PAGE_DOWN");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    if(!isEnabled()) return;
+    DocumentView docView = view.getSelectedDocumentView();
+
+    docView.setSelectedLayerIndex(docView.getSelectedLayerIndex() - 1);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() > 0;
+  }
+}
+
+public class SelectBottomLayerAction extends MenuBarAction {
+  SelectBottomLayerAction(View view) {
+    super(view, "Go to Bottom Layer", "ctrl alt PAGE_DOWN");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    view.getSelectedDocumentView().setSelectedLayerIndex(0);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() > 0;
+  }
+}
+
+public class MoveLayerToTopAction extends MenuBarAction {
+  MoveLayerToTopAction(View view) {
+    super(view, "Move Layer to Top");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    ArrayList<Layer> layers = view.getSelectedDocument().getLayers();
+
+    createSnapshot();
+    layers.add(layers.remove(docView.getSelectedLayerIndex()));
+    docView.setSelectedLayerIndex(layers.size() - 1);
+
+    updateDocView();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() < view.getSelectedDocument().getLayerCount() - 1;
+  }
+}
+
+public class MoveLayerToBottomAction extends MenuBarAction {
+  MoveLayerToBottomAction(View view) {
+    super(view, "Move Layer to Bottom");
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    DocumentView docView = view.getSelectedDocumentView();
+    ArrayList<Layer> layers = view.getSelectedDocument().getLayers();
+
+    createSnapshot();
+    layers.add(0, layers.remove(docView.getSelectedLayerIndex()));
+    docView.setSelectedLayerIndex(0);
+
+    updateDocView();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && view.getSelectedDocumentView().getSelectedLayerIndex() > 0;
   }
 }

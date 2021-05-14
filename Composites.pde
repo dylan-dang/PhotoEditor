@@ -21,6 +21,7 @@ public final BlendComposite[] BLEND_MODES = new BlendComposite[] {
   null,
   new DifferenceComposite(),
   new ExclusionComposite(),
+  new DivideComposite(),
   null,
   new XorComposite(),
   new AndComposite(),

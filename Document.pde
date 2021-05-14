@@ -11,6 +11,7 @@ public class Document {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     layers.add(layer);
   }
+
   Document(File file) {
     linkedFile = file;
     BufferedImage image;
@@ -24,11 +25,13 @@ public class Document {
     height = image.getHeight();
     layers.add(new Layer(toRGBA(image)));
   }
+
   Document(BufferedImage image) {
     this.width = image.getWidth();
     this.height = image.getHeight();
     layers.add(new Layer(toRGBA(image)));
   }
+
   private BufferedImage toRGBA(BufferedImage image) {
     BufferedImage rbgaImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = rbgaImage.createGraphics();
@@ -36,6 +39,7 @@ public class Document {
     g2.dispose();
     return rbgaImage;
   }
+
   public String getName() {
     if (linkedFile != null) {
       return linkedFile.getName();
@@ -65,51 +69,70 @@ public class Document {
   public boolean isSaved() {
     return isSaved;
   }
+
   public void setSaved(boolean value) {
     isSaved = value;
   }
+
   public boolean isLinked() {
     return linkedFile != null;
   }
+
   public File getLinkedFile() {
     return linkedFile;
   }
+
   public void setLinkedFile(File file) {
     this.linkedFile = file;
   }
+
   public ArrayList<Layer> getLayers() {
     return layers;
   }
+
+  public int getLayerCount() {
+    return layers.size();
+  }
+
   public int getHeight() {
     return height;
   }
+
   public int getWidth() {
     return width;
   }
+
   public void setHeight(int height) {
     this.height = height;
   }
+
   public void setWidth(int width) {
     this.width = width;
   }
+
   public Dimension getDimension() {
     return new Dimension(width, height);
   }
+
   public Layer addEmptyLayer(int index) {
     Layer layer = new Layer(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     layer.setName(String.format("Layer %d", layers.size()));
     layers.add(index, layer);
     return layer;
   }
+
   public Layer addEmptyLayer() {
     return addEmptyLayer(layers.size());
   }
+
   public void addLayer(Layer layer, int index) {
     layers.add(index, layer);
   }
+
   public void addLayer(Layer layer) {
     layers.add(layer);
   }
+
   public void crop(Rectangle rect) {
     for(Layer layer: layers) {
       layer.crop(rect);
@@ -123,6 +146,7 @@ public class SnapShot {
   private ArrayList<Layer> layers = new ArrayList<Layer>();
   private int height, width;
   private int selectedLayer;
+
   SnapShot(Document doc, int selectedLayer) {
     height = doc.getHeight();
     width = doc.getWidth();
@@ -131,15 +155,19 @@ public class SnapShot {
     }
     this.selectedLayer = selectedLayer;
   }
+
   public ArrayList<Layer> getLayers() {
     return layers;
   }
+
   public int getHeight() {
     return height;
   }
+
   public int getWidth() {
     return width;
   }
+
   public int getSelectedLayer() {
     return selectedLayer;
   }
@@ -150,31 +178,36 @@ public class SnapShotManager {
   DocumentView docView;
   ArrayDeque<SnapShot> undoHistory = new ArrayDeque<SnapShot>();
   ArrayDeque<SnapShot> redoHistory = new ArrayDeque<SnapShot>();
+
   SnapShotManager(DocumentView docView) {
     this.docView = docView;
     this.doc = docView.getDocument();
   }
+
   public void save(SnapShot snapshot) {
     redoHistory.clear();
     undoHistory.push(snapshot);
   }
+
   public void save() {
     redoHistory.clear();
     undoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
-    println(undoHistory);
   }
+
   public void undo() {
     if (!ableToUndo())return;
     SnapShot save = undoHistory.pop();
     redoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
     restore(save);
   }
+
   public void redo() {
     if (!ableToRedo()) return;
     SnapShot save = redoHistory.pop();
     undoHistory.push(new SnapShot(doc, docView.getSelectedLayerIndex()));
     restore(save);
   }
+
   private void restore(SnapShot save) {
     ArrayList<Layer> layers = doc.getLayers();
     layers.clear();
@@ -185,9 +218,11 @@ public class SnapShotManager {
     docView.revalidate();
     docView.repaint();
   }
+
   public boolean ableToUndo() {
     return !undoHistory.isEmpty();
   }
+
   public boolean ableToRedo() {
     return !redoHistory.isEmpty();
   }
@@ -214,12 +249,44 @@ public class Layer {
     return image;
   }
 
+  public void setImage(BufferedImage image) {
+    if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
+      throw new IllegalStateException("Expected TYPE_INT_ARGB");
+    }
+    g.dispose();
+    this.image = image;
+    g = image.createGraphics();
+  }
+
   public void crop(Rectangle rect) {
     g.dispose();
     BufferedImage crop = image.getSubimage(rect.x, rect.y, rect.width, rect.height);
     image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
     g = image.createGraphics();
     g.drawImage(crop, 0, 0, null);
+  }
+
+  public void flipHorizontally() {
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Src);
+    g.drawImage(image, image.getWidth(), 0, -image.getWidth(), image.getHeight(), null);
+    g.setComposite(before);
+  }
+
+  public void flipVertically() {
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Src);
+    g.drawImage(getCopiedImage(), 0, image.getHeight(), image.getWidth(), -image.getHeight(), null);
+    g.setComposite(before);
+  }
+
+  public void rotate180deg() {
+    Composite before = g.getComposite();
+    g.setComposite(AlphaComposite.Src);
+    g.rotate(PI, image.getWidth() / 2, image.getHeight() / 2);
+    g.drawRenderedImage(getCopiedImage(), null);
+    g.rotate(PI, image.getWidth() / 2, image.getHeight() / 2);
+    g.setComposite(before);
   }
 
   public String getName() {
@@ -263,15 +330,19 @@ public class Layer {
   }
 
   public Layer copy() {
-    ColorModel colorModel = image.getColorModel();
-    boolean isAlphaPremultiplied = colorModel.isAlphaPremultiplied();
-    WritableRaster raster = image.copyData(image.getRaster().createCompatibleWritableRaster());
-    BufferedImage imageCopy = new BufferedImage(colorModel, raster, isAlphaPremultiplied, null);
-    Layer copy = new Layer(imageCopy);
+    Layer copy = new Layer(getCopiedImage());
     copy.setName(name);
     copy.setOpacity(opacity);
     copy.setVisible(isVisible());
     copy.setBlendComposite(blendIndex);
     return copy;
+  }
+
+  public BufferedImage getCopiedImage() {
+    ColorModel colorModel = image.getColorModel();
+    boolean isAlphaPremultiplied = colorModel.isAlphaPremultiplied();
+    WritableRaster raster = image.copyData(image.getRaster().createCompatibleWritableRaster());
+    BufferedImage imageCopy = new BufferedImage(colorModel, raster, isAlphaPremultiplied, null);
+    return imageCopy;
   }
 }

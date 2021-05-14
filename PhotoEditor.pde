@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicSpinnerUI;
 import javax.swing.plaf.basic.BasicToolBarUI;
+import javax.swing.UIManager.*;
 import javax.swing.event.*;
 import javax.imageio.*;
 
@@ -25,19 +26,44 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
-void setup() {
-  //styling (isn't necessary to run the program but sets up the theme)
-  com.formdev.flatlaf.FlatDarkLaf.install();
+Set<Integer> pressedKeys = new HashSet<Integer>();
 
+void setup() {
+  //setup the frame
   size(800, 600);
   System.setProperty("apple.laf.useScreenMenuBar", "true"); //menubar to to top, for macs
   JFrame frame = (JFrame) ((processing.awt.PSurfaceAWT.SmoothCanvas) surface.getNative()).getFrame(); //hook into Processing frame
   frame.setTitle("Photo Editor");
   frame.setResizable(true);
 
-  View view = new View(frame);
+  try {
+    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+      if ("Nimbus".equals(info.getName())) {
+        //set look and feel to nimbus
+        UIManager.setLookAndFeel(info.getClassName());
+        break;
+      }
+    }
+  } catch (Exception e) {
+    println("couldn't load nimbus, defaulting to metal");
+  }
 
-  //temporary icon
+  //add view to frame
+  View view = new View(frame);
+  
+  //register keypresses to set
+  KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent keyEvent) {
+      switch (keyEvent.getID()) {
+        case KeyEvent.KEY_PRESSED: pressedKeys.add(keyEvent.getKeyCode()); break;
+        case KeyEvent.KEY_RELEASED: pressedKeys.remove(keyEvent.getKeyCode()); break;
+      }
+      return false;
+    }
+  });
+
+  //set icon
   surface.setIcon(loadImage("https://image.flaticon.com/icons/png/512/196/196278.png"));
 
   //don't wast resources on a drawing Thread.

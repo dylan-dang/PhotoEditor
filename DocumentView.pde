@@ -98,24 +98,21 @@ public class DocumentView extends JPanel {
       button.setBorderPainted(false);
       button.setBackground(null);
       button.setOpaque(false);
+      button.setFocusable(false);
+      UIDefaults def = new UIDefaults();
+      def.put("Button[Disabled].backgroundPainter", DrawHelper.EMPTY_PAINTER);
+      def.put("Button[Enabled].backgroundPainter", DrawHelper.EMPTY_PAINTER);
+      button.putClientProperty("Nimbus.Overrides", def);
     }
 
     fitToWindow.setIcon(infoBarIcon("fitToWindow.png"));
     zoomOut.setIcon(infoBarIcon("zoomOut.png"));
     zoomIn.setIcon(infoBarIcon("zoomIn.png"));
 
-    zoomSpinner = new JSpinner(new SpinnerNumberModel(100d, 1d, 6400d, 1d));
+    zoomSpinner = new JSpinner(new SpinnerNumberModel(100d, 0.1d, 6400d, 1d));
     Dimension zoomSpinnerSize = new Dimension(45, INFOBAR_HEIGHT);
     JSpinner.NumberEditor editor = new JSpinner.NumberEditor(zoomSpinner, "##0.##");
-    editor.getTextField().setBackground(null);
-    zoomSpinner.setUI(new BasicSpinnerUI() {
-      protected Component createNextButton() {
-        return null;
-      }
-      protected Component createPreviousButton() {
-        return null;
-      }
-    });
+    zoomSpinner.setFocusable(false);
     zoomSpinner.setMaximumSize(editor.getTextField().getPreferredSize());
     zoomSpinner.setEditor(editor);
     zoomSpinner.setBorder(null);
@@ -247,7 +244,7 @@ public class DocumentView extends JPanel {
     }
   }
 
-  private class CanvasMouseListener extends MouseAdapter {
+  private class CanvasMouseListener implements MouseMotionListener, MouseWheelListener, MouseListener {
     Point2D pos = new Point2D.Double(0, 0);
     ToolAction tool;
     DragGesture dragState;
@@ -326,6 +323,12 @@ public class DocumentView extends JPanel {
       updatePos(e);
       tool.click(pos, e.getButton());
     }
+
+    @Override
+    void mouseEntered(MouseEvent e) {}
+
+    @Override
+    void mouseExited(MouseEvent e) {}
 
     private void updatePostionLabel() {
       positionLabel.setText(String.format("%d, %dpx", (int) pos.getX(), (int) pos.getY()));
@@ -416,7 +419,7 @@ public class DocumentView extends JPanel {
     }
     if (!zoomSlider.getValueIsAdjusting())
       zoomSlider.setValue(lastTick);
-    zoomSpinner.setValue(scale * 100);
+    zoomSpinner.setValue(scale * 100d);
 
     canvas.revalidate();
     viewport.repaint();
@@ -431,18 +434,21 @@ public class DocumentView extends JPanel {
   public Layer getSelectedLayer() {
     return document.getLayers().get(selectedLayerIndex);
   }
+  
+  public int getSelectedLayerIndex() {
+    return selectedLayerIndex;
+  }
 
   public void setSelectedLayer(Layer layer) {
     selectedLayerIndex = document.getLayers().indexOf(layer);
+    view.getLayerListView().update();
   }
 
   public void setSelectedLayerIndex(int index) {
     selectedLayerIndex = index;
+    view.getLayerListView().update();
   }
 
-  public int getSelectedLayerIndex() {
-    return selectedLayerIndex;
-  }
 
   public Document getDocument() {
     return document;
@@ -467,9 +473,11 @@ public class DocumentView extends JPanel {
   public void updateImageSizeLabel() {
     imageSizeLabel.setText(String.format("%d x %dpx", document.getWidth(), document.getHeight()));
   }
+
   public SnapShotManager getSnapShotManager() {
     return snapShotManager;
   }
+
   public void save() {
     snapShotManager.save();
   }

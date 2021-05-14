@@ -1,5 +1,5 @@
 public class View extends JPanel {
-  public final Color CONTENT_BACKGROUND = new Color(0x282828); //i could probably put this constant in a different static class
+  public final Color CONTENT_BACKGROUND = new Color(0xbfbfbf); //i could probably put this constant in a different static class
   private final JFXPanel JFXPANEL = new JFXPanel(); //this is needed for the FileChoosers
   private boolean drawPixelGrid = false;
 
@@ -7,8 +7,10 @@ public class View extends JPanel {
   private JMenuBar menuBar;
   private ToolOptions toolOptions;
   private ToolAction[] toolActions = {
-    //new MoveAction(this),
+    new MoveAction(this),
     new SelectAction(this),
+    new LassoAction(this),
+    new PolygonalLassoTool(this),
     new CropAction(this),
     new EyeDropAction(this),
     new BrushAction(this),
@@ -93,7 +95,13 @@ public class View extends JPanel {
       new ExitAction(this)});
     addMenuActions(new JMenu("Edit"), new MenuBarAction[] {
       new UndoAction(this),
-      new RedoAction(this)});
+      new RedoAction(this),
+      null,
+      new EraseSelectionAction(this),
+      new FillSelectionAction(this),
+      new InvertSelectionAction(this),
+      new SelectAllAction(this),
+      new DeselectAction(this)});
     addMenuActions(new JMenu("View"), new MenuBarAction[] {
       new ZoomInAction(this),
       new ZoomOutAction(this),
@@ -102,8 +110,40 @@ public class View extends JPanel {
       new ActualSizeAction(this),
       null,
       new TogglePixelGrid(this)});
-    addMenuActions(new JMenu("Image"), new MenuBarAction[] {});
-    addMenuActions(new JMenu("Layer"), new MenuBarAction[] {});
+    addMenuActions(new JMenu("Image"), new MenuBarAction[] {
+      new CropToSelectionAction(this),
+      new ResizeAction(this),
+      new CanvasSizeAction(this),
+      null,
+      new ImageFlipHorizontalAction(this),
+      new ImageFlipVerticalAction(this),
+      null,
+      new ImageRotate90degAction(this, true),
+      new ImageRotate90degAction(this, false),
+      new ImageRotate180degAction(this),
+      null,
+      new FlattenAction(this)
+    });
+    addMenuActions(new JMenu("Layer"), new MenuBarAction[] {
+      new AddEmptyLayerAction(this),
+      new RemoveLayerAction(this),
+      new DuplicateLayerAction(this),
+      new MergeLayerAction(this),
+      null,
+      new LayerFlipHorizontalAction(this),
+      new LayerFlipVerticalAction(this),
+      new LayerRotate180degAction(this),
+      null,
+      new SelectTopLayerAction(this),
+      new SelectLayerAboveAction(this),
+      new SelectLayerBelowAction(this),
+      new SelectBottomLayerAction(this),
+      null,
+      new MoveLayerToTopAction(this),
+      new MoveUpLayerAction(this),
+      new MoveDownLayerAction(this),
+      new MoveLayerToBottomAction(this)
+    });
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {
       new PopArtFilter(this),
       new TrippyFilter(this)
@@ -133,6 +173,7 @@ public class View extends JPanel {
 
   private void setupImageTabs() {
     imageTabs = new JTabbedPane();
+    imageTabs.setFocusable(false);
     imageTabs.setMinimumSize(new Dimension(0, 0));
     imageTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     imageTabs.addChangeListener(new ChangeListener() {

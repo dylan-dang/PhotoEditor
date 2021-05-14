@@ -1,5 +1,8 @@
 public static class DrawHelper {
   public final static Color CHECKER = new Color(0xCCCCCC);
+  public final static Painter<JComponent> EMPTY_PAINTER = new Painter<JComponent>() {
+    public void paint(Graphics2D g, JComponent c, int width, int height) {}
+  };
 
   public static void drawChecker(Graphics2D g, int x, int y, int width, int height, int size) {
     g.setColor(Color.white);

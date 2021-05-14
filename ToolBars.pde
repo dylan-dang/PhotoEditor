@@ -49,6 +49,7 @@ public class ToolBar extends StyledJToolBar {
       button.setPreferredSize(size);
       button.setMaximumSize(size);
       button.setMinimumSize(size);
+      button.setFocusable(false);
       button.setAlignmentX(CENTER_ALIGNMENT);
       group.add(button);
       add(button);
