@@ -210,7 +210,6 @@ public class DocumentView extends JPanel {
       g2.drawLine(--size.width, 0, size.width, --size.height);
       g2.drawLine(0, size.height, size.width, size.height);
 
-
       if (hasSelection()) {
         drawDoubleDashed(g2, getScaledSelection(), selectionWhiteDash, selectionBlackDash);
       }

@@ -65,6 +65,7 @@ public abstract class ToolAction extends AbstractAction {
     docView.getDocument().updateFlattenedCache();
     docView.getCanvas().repaint();
     doc.setSaved(false);
+    view.updateTabNames();
     view.getLayerListView().update();
   }
 

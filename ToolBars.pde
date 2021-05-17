@@ -90,8 +90,6 @@ public class ToolOptions extends StyledJToolBar implements ActionListener {
     toolsCombo.setRenderer(new ComboBoxRenderer());
     toolsCombo.setBackground(null);
     toolsCombo.setOpaque(false);
-    toolsCombo.setMaximumSize(new Dimension(55, 24));
-    toolsCombo.setPreferredSize(new Dimension(55, 24));
     toolsCombo.setFocusable(false);
     toolsCombo.addActionListener(this);
     add(toolsCombo);

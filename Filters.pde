@@ -67,7 +67,7 @@ public class WarholBiggieFilter extends FilterAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     super.actionPerformed(e);
-
+    
   }
 }
 

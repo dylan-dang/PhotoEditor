@@ -132,11 +132,12 @@ public class SaveAction extends MenuBarAction {
     File file = doc.getLinkedFile();
     try {
       ImageIO.write(doc.flattened(), "png", file);
-      throw new IOException();
     } catch (IOException ioex) {
+      ioex.printStackTrace();
       JOptionPane.showMessageDialog(null, "Something went wrong when trying to save your file.", "Error", JOptionPane.ERROR_MESSAGE);
     }
     doc.setSaved(true);
+    view.updateTabNames();
   }
 }
 
@@ -626,7 +627,7 @@ public class ResizeAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-
+    
   }
 }
 

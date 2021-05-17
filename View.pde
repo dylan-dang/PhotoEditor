@@ -204,12 +204,18 @@ public class View extends JPanel {
   public DocumentView insertDocument(Document doc, int index) {
     DocumentView docView =  new DocumentView(doc, this);
     docView.setCanvasBackground(CONTENT_BACKGROUND);
-    imageTabs.insertTab(doc.getName(), null, docView, null, index);
+    imageTabs.insertTab(doc.getName() + (doc.isSaved() ? "" : "*"), null, docView, null, index);
     return docView;
   }
 
+  public void updateTabNames() {
+    for(int tab = 0; tab < imageTabs.getTabCount(); tab++) {
+      Document doc = ((DocumentView)imageTabs.getComponentAt(tab)).getDocument();
+      imageTabs.setTitleAt(tab, doc.getName() + (doc.isSaved() ? "" : "*"));
+    }
+  }
+
   public DocumentView addDocument(Document doc) {
-    //not really used but its here for future proofing
     return insertDocument(doc, imageTabs.getTabCount());
   }
 

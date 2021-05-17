@@ -69,7 +69,7 @@ void setup() {
   //don't wast resources on a drawing Thread.
   noLoop();
 }
-
+         
 //override the default exit function so we can intercept and ask the use to save when they exit
 @Override
 void exit() {}
