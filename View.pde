@@ -146,6 +146,7 @@ public class View extends JPanel {
     });
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {
       new PopArtFilter(this),
+      new WarholBiggieFilter(this),
       new TrippyFilter(this)
     });
   }
