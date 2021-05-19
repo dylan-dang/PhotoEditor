@@ -140,6 +140,19 @@ public class Document {
     width = rect.width;
     height = rect.height;
   }
+
+  public void resize(int width, int height, Object interpolation) {
+    this.width = width;
+    this.height = height;
+    for(Layer layer: layers) {
+      BufferedImage original = layer.getImage();
+      layer.setImage(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
+
+      Graphics2D g = layer.getGraphics();
+      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interpolation);
+      g.drawImage(original, 0, 0, width, height, null);
+    }
+  }
 }
 
 public class SnapShot {

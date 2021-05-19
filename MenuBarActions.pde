@@ -78,8 +78,26 @@ public class NewFileAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
+    Document doc = view.getSelectedDocument();
+
+    JPanel labels = new JPanel(new GridLayout(0, 1, 2, 2));
+    labels.add(new JLabel("Width:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Height:", SwingConstants.RIGHT));
+
+    JPanel inputs = new JPanel(new GridLayout(0, 1, 2, 2));
+    JSpinner width, height;
+    inputs.add(width = new JSpinner(new SpinnerNumberModel(doc.getWidth(), 1, Short.MAX_VALUE, 1)));
+    inputs.add(height = new JSpinner(new SpinnerNumberModel(doc.getHeight(), 1, Short.MAX_VALUE, 1)));
+
+    JPanel panel = new JPanel(new BorderLayout(5, 5));
+    panel.add(labels, BorderLayout.WEST);
+    panel.add(inputs, BorderLayout.CENTER);
+
+    int confirmation = JOptionPane.showConfirmDialog(view.getFrame(), panel, "New Image", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    if(confirmation == JOptionPane.CANCEL_OPTION) return;
+
     int index = view.getImageTabs().getSelectedIndex() + 1;
-    view.insertDocument(new Document(800, 600), index);
+    view.insertDocument(new Document((int)width.getValue(), (int)height.getValue()), index);
     view.getImageTabs().setSelectedIndex(index);
   }
 
@@ -338,8 +356,7 @@ public class UndoAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     view.getSelectedDocumentView().snapShotManager.undo();
-    view.getSelectedDocumentView().getCanvas().revalidate();
-    view.getLayerListView().update();
+    updateDocView();
   }
 
   @Override
@@ -356,7 +373,7 @@ public class RedoAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     view.getSelectedDocumentView().getSnapShotManager().redo();
-    view.getLayerListView().update();
+    updateDocView();
   }
 
   @Override
@@ -625,9 +642,55 @@ public class ResizeAction extends MenuBarAction {
     super(view, "Resize...", "ctrl R");
   }
 
+  class Item {
+    String name;
+    Object value;
+
+    Item(String name, Object value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    String toString() {
+      return name;
+    }
+
+    Object getValue() {
+      return value;
+    }
+  }
+
   @Override
   public void actionPerformed(ActionEvent e) {
-    
+    Document doc = view.getSelectedDocument();
+
+    JPanel labels = new JPanel(new GridLayout(0, 1, 2, 2));
+    labels.add(new JLabel("Resampling:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Width:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Height:", SwingConstants.RIGHT));
+
+    JPanel inputs = new JPanel(new GridLayout(0, 1, 2, 2));
+    JComboBox resampling = new JComboBox(new Item[] {
+      new Item("Bicubic", RenderingHints.VALUE_INTERPOLATION_BICUBIC),
+      new Item("Bilinear", RenderingHints.VALUE_INTERPOLATION_BILINEAR),
+      new Item("Nearest Neighbor", RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+    });
+    JSpinner width, height;
+    inputs.add(resampling);
+    inputs.add(width = new JSpinner(new SpinnerNumberModel(doc.getWidth(), 1, Short.MAX_VALUE, 1)));
+    inputs.add(height = new JSpinner(new SpinnerNumberModel(doc.getHeight(), 1, Short.MAX_VALUE, 1)));
+
+    JPanel panel = new JPanel(new BorderLayout(5, 5));
+    panel.add(labels, BorderLayout.WEST);
+    panel.add(inputs, BorderLayout.CENTER);
+
+    int confirmation = JOptionPane.showConfirmDialog(view.getFrame(), panel, "Resize", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    if(confirmation == JOptionPane.CANCEL_OPTION) return;
+
+    createSnapshot();
+    doc.resize((int)width.getValue(), (int)height.getValue(), ((Item)resampling.getSelectedItem()).getValue());
+    updateDocView();
+
   }
 }
 
