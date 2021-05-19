@@ -18,7 +18,7 @@
       "args": [
 		"--force",
 		"--sketch=${workspaceRoot}",
-		"--output=${workspaceRoot}/out",
+		"--output=C:\\Users\\ender\\Desktop\\out",
 		"--run"
 	  ],
       "windows": {
@@ -30,7 +30,7 @@
             "quoting": "strong"
           },
           {
-            "value": "--output=${workspaceRoot}\\out",
+            "value": "--output=C:\\Users\\ender\\Desktop\\out",
             "quoting": "strong"
           },
           "--run"

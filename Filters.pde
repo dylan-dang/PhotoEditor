@@ -204,23 +204,107 @@ public class WarholBiggieFilter extends FilterAction {
   }
 }
 
-public class TrippyFilter extends FilterAction {
-  TrippyFilter(View view) {
-    super(view, "Trippy Filter");
+public class FantasyFilter extends FilterAction {
+  FantasyFilter(View view) {
+    super(view, "Fantasy Filter");
   }
   @Override
   public void actionPerformed(ActionEvent e) {
     super.actionPerformed(e);
     for(int i = 0; i < pixels.length; i++) {
-      pixels[i] = tintColor(pixels[i], 175);
-      pixels[i] = color(alpha(pixels[i]), blue(pixels[i]) + 3, green(pixels[i]), red(pixels[i]));
+      pixels[i] = getColor(alpha(pixels[i]), blue(pixels[i]) + 83, green(pixels[i]) + 80, red(pixels[i]) + 80);
     }
     update();
   }
-  private int tintChannel(int channel, int tint) {
-    return channel + (255 - channel) * tint;
+}
+
+public class BlackAndWhiteFilter extends FilterAction {
+  BlackAndWhiteFilter(View view) {
+    super(view, "Black and White");
   }
-  private int tintColor(int c, int tint) {
-    return getColor(alpha(c), tintChannel(red(c), tint), tintChannel(green(c), tint), tintChannel(blue(c), tint));
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    super.actionPerformed(e);
+    for(int i = 0; i < pixels.length; i++) {
+      int average = red(pixels[i])/3 + green(pixels[i])/3 + blue(pixels[i])/3;
+      pixels[i] = getColor(alpha(pixels[i]), average, average, average);
+    }
+    update();
+  }
+}
+
+public class SepiaFilter extends FilterAction {
+  SepiaFilter(View view) {
+    super(view, "Sepia");
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    super.actionPerformed(e);
+    for(int i = 0; i < pixels.length; i++) {
+      int r = red(pixels[i]);
+      int g = green(pixels[i]);
+      int b = blue(pixels[i]);
+      pixels[i] = getColor(alpha(pixels[i]),
+        (int)(0.393*r + 0.769*g + 0.189*b),
+        (int)(0.349*r + 0.686*g + 0.168*b),
+        (int)(0.272*r + 0.534*g + 0.131*b));
+    }
+    update();
+  }
+}
+
+public class InvertFilter extends FilterAction {
+  InvertFilter(View view) {
+    super(view, "Invert");
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    super.actionPerformed(e);
+    for(int i = 0; i < pixels.length; i++) {
+      pixels[i] = getColor(alpha(pixels[i]),
+      255 - red(pixels[i]),
+      255 - green(pixels[i]),
+      255 - blue(pixels[i]));
+    }
+    update();
+  }
+}
+
+public class PosterizeFilter extends FilterAction {
+  PosterizeFilter(View view) {
+    super(view, "Posterize");
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    super.actionPerformed(e);
+    for(int i = 0; i < pixels.length; i++) {
+      int r = red(pixels[i]);
+      int g = green(pixels[i]);
+      int b = blue(pixels[i]);
+      pixels[i] = getColor(alpha(pixels[i]), 
+        r - r % 64,
+        g - g % 64,
+        b - b % 64
+      );
+    }
+    update();
+  }
+}
+
+public class ChromaticAbberationFilter extends FilterAction {
+  ChromaticAbberationFilter(View view) {
+    super(view, "Chromatic Abberation");
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    super.actionPerformed(e);
+    int[] original = pixels.clone();
+    for(int i = 0; i < pixels.length; i++) {
+      pixels[i] = getColor(alpha(pixels[i]), 
+        red(original[Math.floorMod(i - 5, pixels.length)]),
+        green(original[i]),
+        blue(original[(i + 5) % pixels.length]));
+    }
+    update();
   }
 }

@@ -7,7 +7,7 @@ public class View extends JPanel {
   private JMenuBar menuBar;
   private ToolOptions toolOptions;
   private ToolAction[] toolActions = {
-    new MoveAction(this),
+    //new MoveAction(this),
     new SelectAction(this),
     new LassoAction(this),
     new PolygonalLassoTool(this),
@@ -147,11 +147,18 @@ public class View extends JPanel {
     addMenuActions(new JMenu("Filter"), new MenuBarAction[] {
       new PopArtFilter(this),
       new WarholBiggieFilter(this),
-      new TrippyFilter(this)
+      new FantasyFilter(this),
+      null,
+      new BlackAndWhiteFilter(this),
+      new SepiaFilter(this),
+      new InvertFilter(this),
+      new PosterizeFilter(this),
+      new ChromaticAbberationFilter(this)
     });
   }
 
   private void setupToolBars() {
+    SharedOptions.setup(sketchPath());
     add(toolBar = new ToolBar(toolActions), BorderLayout.WEST);
     add(toolOptions = new ToolOptions(toolBar), BorderLayout.NORTH);
   }

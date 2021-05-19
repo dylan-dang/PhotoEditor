@@ -1,5 +1,30 @@
+public static class SharedOptions {
+  public static JSpinner weightSpinner = new JSpinner(new SpinnerNumberModel(20f, 1f, 10000f, 1f));
+  public static JToggleButton antialiasingButton = new JToggleButton("", true);
+  public static JComboBox sampling = new JComboBox(new String[] {"Layer", "Image"});
+  public static final int REPLACE = 0, ADD = 1, SUBTRACT = 2, INTERSECT = 3, INVERT = 4;
+  public static JComboBox setOperations = new JComboBox(new String[] {
+    "Replace",
+    "Add (Union)",
+    "Subtract",
+    "Intersect",
+    "Invert (xor)"});
+
+  public static void setup(String sketchPath) {
+    UIDefaults def = new UIDefaults();
+    def.put("ToolBar:ToggleButton[Selected].backgroundPainter", DrawHelper.EMPTY_PAINTER);
+    antialiasingButton.setIcon(new ImageIcon(sketchPath + "/resources/tools/options/aliasing.png"));
+    antialiasingButton.setSelectedIcon(new ImageIcon(sketchPath + "/resources/tools/options/antialiasing.png"));
+    antialiasingButton.setFocusable(false);
+    antialiasingButton.setRolloverEnabled(false);
+    antialiasingButton.putClientProperty("Nimbus.Overrides", def);
+    antialiasingButton.setPreferredSize(new Dimension(24, 24));
+  }
+}
+
 public abstract class ToolAction extends AbstractAction {
   protected String name;
+  protected ArrayList<JComponent> options = new ArrayList<JComponent>();
   protected DragGesture dragState = new DragGesture();
   protected Point2D start, last, current;
   protected DocumentView docView;
@@ -9,11 +34,13 @@ public abstract class ToolAction extends AbstractAction {
   protected ColorSelector selector;
   protected Rectangle imageRect;
   protected String toolTip;
+  protected ToolOptions toolOptions;
   View view;
 
   ToolAction(String name, String toolIconName, View view) {
     this.name = name;
     this.view = view;
+    this.toolOptions = view.getToolOptions();
     toolTip = name;
     putValue(Action.SMALL_ICON, new ImageIcon(sketchPath(String.format("resources/tools/%s", toolIconName))));
   }
@@ -34,6 +61,10 @@ public abstract class ToolAction extends AbstractAction {
     DocumentView docView = view.getSelectedDocumentView();
     docView.setToolTipIcon((ImageIcon) getValue(Action.SMALL_ICON));
     docView.setToolTipText(toolTip);
+  }
+
+  public ArrayList<JComponent> getOptions() {
+    return options;
   }
 
   public DragGesture getDragState() {
@@ -135,7 +166,6 @@ class DragGesture {
   }
 }
 
-
 public class MoveAction extends ToolAction {
   BufferedImage original;
   BufferedImage crop;
@@ -165,9 +195,13 @@ public class LassoAction extends SelectAction {
 
   LassoAction(View view) {
     super("Lasso Tool", "lasso.png", view);
+
+    options.add(new JLabel("Operation: "));
+    options.add(SharedOptions.setOperations);
   }
   
   public void dragStarted() {
+    super.dragStarted();
     Point2D start = dragState.getStart();
     selection = new Path2D.Double();
     selection.moveTo(start.getX(), start.getY());
@@ -179,11 +213,41 @@ public class LassoAction extends SelectAction {
 
     if(current.distance(last) > 0.01)
       selection.lineTo(current.getX(), current.getY());
+    
+    Area selectedArea = new Area(selection);
 
-    Path2D.Double closedSelection = (Path2D.Double)selection.clone();
-    closedSelection.closePath();
+    switch(SharedOptions.setOperations.getSelectedIndex()) {
+      case SharedOptions.REPLACE:
+        Path2D.Double closedSelection = (Path2D.Double)selection.clone();
+        closedSelection.closePath();
+        docView.setSelection(closedSelection);
+        return;
 
-    docView.setSelection(closedSelection);
+      case SharedOptions.ADD: 
+        selectedArea.add(preSelection);
+        break;
+
+      case SharedOptions.SUBTRACT: 
+        Area clone = ((Area)preSelection.clone());
+        clone.subtract(selectedArea);
+        selectedArea = clone;
+        break;
+
+      case SharedOptions.INTERSECT:
+        selectedArea.intersect(preSelection);
+        break;
+      
+      case SharedOptions.INVERT:
+        selectedArea.exclusiveOr(preSelection);
+        break;
+    }
+
+    docView.setSelection(selectedArea);
+  }
+
+  public void dragEnded() {
+    Shape selection = docView.getSelection();
+    if(!(selection instanceof Area)) docView.setSelection(new Area(selection));
   }
 
   @Override
@@ -192,11 +256,15 @@ public class LassoAction extends SelectAction {
     docView.setSelection(null);
   }
 }
-public class PolygonalLassoTool extends ToolAction {
+
+public class PolygonalLassoTool extends SelectAction {
   Path2D.Double selection;
 
   PolygonalLassoTool(View view) {
     super("Polygonal Lasso Tool", "polygonallasso.png", view);
+
+    options.add(new JLabel("Operation: "));
+    options.add(SharedOptions.setOperations);
   }
 
   @Override
@@ -208,6 +276,7 @@ public class PolygonalLassoTool extends ToolAction {
   @Override
   public void dragStarted() {
     if(selection != null) return;
+    super.dragStarted();
     Point2D start = dragState.getStart();
     selection = new Path2D.Double();
     selection.moveTo(start.getX(), start.getY());
@@ -234,19 +303,46 @@ public class PolygonalLassoTool extends ToolAction {
   public void click(Point2D pos, int button) {
     DocumentView docView = view.getSelectedDocumentView();
     selection.lineTo(pos.getX(), pos.getY());
-    if (button == MouseEvent.BUTTON3) {
-      selection.closePath();
+
+    if(SharedOptions.setOperations.getSelectedIndex() == REPLACE && button != MouseEvent.BUTTON3) {
       docView.setSelection(selection);
-      selection = null;
-    } else {
-      docView.setSelection(selection);
+      return;
     }
+
+    Area selectedArea = new Area(selection);
+
+    switch(SharedOptions.setOperations.getSelectedIndex()) {
+      case SharedOptions.ADD: 
+        selectedArea.add(preSelection);
+        break;
+
+      case SharedOptions.SUBTRACT: 
+        Area clone = ((Area)preSelection.clone());
+        clone.subtract(selectedArea);
+        selectedArea = clone;
+        break;
+
+      case SharedOptions.INTERSECT:
+        selectedArea.intersect(preSelection);
+        break;
+      
+      case SharedOptions.INVERT:
+        selectedArea.exclusiveOr(preSelection);
+        break;
+    }
+
+    docView.setSelection(selectedArea);
   }
 }
 
 public class SelectAction extends ToolAction {
+  protected Area preSelection;
+
   SelectAction(View view) {
     super("Rectangle Select Tool", "select.png", view);
+
+    options.add(new JLabel("Operation: "));
+    options.add(SharedOptions.setOperations);
   }
 
   SelectAction(String name, String toolIconName, View view) {
@@ -254,10 +350,14 @@ public class SelectAction extends ToolAction {
     super(name, toolIconName, view);
   }
 
+  public void dragStarted() {
+    Shape selection = view.getSelectedDocumentView().getSelection();
+    preSelection = selection instanceof Area ? (Area)selection : new Area(selection);
+  }
+
   public void dragging() {
     super.initVars();
     if (!dragState.isDragging()) return; //check if just a click
-
 
     int startX = (int) start.getX();
     int startY = (int) start.getY();
@@ -267,21 +367,44 @@ public class SelectAction extends ToolAction {
     if(pressedKeys.contains(KeyEvent.VK_SHIFT))
       width = height = Math.min(width, height);
 
-    Rectangle selection = new Rectangle(
+    Area selection = new Area(new Rectangle(
       startX + (width < 0 ? width : 0),
       startY + (height < 0 ? height: 0),
       Math.abs(width),
       Math.abs(height))
-      .intersection(imageRect);
+      .intersection(imageRect));
 
-    if (selection.height == 0 || selection.width == 0) return;
+    if (height == 0 || width == 0) return;
+
+    if (!(this instanceof CropAction)) {
+      switch(SharedOptions.setOperations.getSelectedIndex()) {
+        case SharedOptions.ADD:
+          selection.add(preSelection);
+          break;
+
+        case SharedOptions.SUBTRACT: 
+          Area clone = ((Area)preSelection.clone());
+          clone.subtract(selection);
+          selection = clone;
+          break;
+
+        case SharedOptions.INTERSECT:
+          selection.intersect(preSelection);
+          break;
+
+        case SharedOptions.INVERT:
+          selection.exclusiveOr(preSelection);
+          break;
+      }
+    }
+
     docView.setSelection(selection);
   }
 
   @Override
   public void click(Point2D pos, int button) {
-    docView = view.getSelectedDocumentView();
-    docView.setSelection(null);
+    if(SharedOptions.setOperations.getSelectedIndex() == SharedOptions.REPLACE)
+      view.getSelectedDocumentView().setSelection(null);
   }
 
   @Override
@@ -320,13 +443,15 @@ public class CropAction extends SelectAction {
 public class EyeDropAction extends ToolAction {
   EyeDropAction(View view){
     super("Eyedropper Tool", "eyedrop.png", view);
+    options.add(new JLabel("Sampling: "));
+    options.add(SharedOptions.sampling);
   }
 
   public void dragging() {
     super.initVars();
     if (!imageRect.contains(current)) return;
 
-    BufferedImage samplingImage = selectedLayer.getImage();
+    BufferedImage samplingImage = (String)SharedOptions.sampling.getSelectedItem() == "Image" ? doc.flattened() : selectedLayer.getImage();
     Color c = new Color(samplingImage.getRGB((int) current.getX(), (int) current.getY()), true);
 
     if (buttons.contains(MouseEvent.BUTTON1))
@@ -337,8 +462,13 @@ public class EyeDropAction extends ToolAction {
 }
 
 public class BrushAction extends ToolAction {
+
   BrushAction(View view){
     super("Paintbrush Tool", "brush.png", view);
+
+    options.add(new JLabel("Brush width: "));
+    options.add(SharedOptions.weightSpinner);
+    options.add(SharedOptions.antialiasingButton);
   }
 
   public void dragging() {
@@ -347,11 +477,17 @@ public class BrushAction extends ToolAction {
     Graphics2D g = selectedLayer.getGraphics();
     g.setClip(docView.getSelection());
     g.setPaint(getSelectedColor());
-    g.setStroke(new BasicStroke(20, BasicStroke.CAP_ROUND, 0));
-    g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
 
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+      SharedOptions.antialiasingButton.isSelected() ?
+      RenderingHints.VALUE_ANTIALIAS_ON :
+      RenderingHints.VALUE_ANTIALIAS_OFF);
+
+    g.setStroke(new BasicStroke(((Double)SharedOptions.weightSpinner.getValue()).floatValue(), BasicStroke.CAP_ROUND, 0));
+    g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
     updateDocument();
   }
+
   public void dragStarted() {
     view.getSelectedDocumentView().snapShotManager.save();
   }
@@ -374,8 +510,6 @@ public class PencilAction extends ToolAction {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     g.setStroke(new BasicStroke(1));
     g.drawLine((int)last.getX(), (int)last.getY(), (int)current.getX(), (int)current.getY());
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
     updateDocument();
 
   }
@@ -384,6 +518,10 @@ public class PencilAction extends ToolAction {
 public class EraserAction extends ToolAction {
   EraserAction(View view){
     super("Eraser", "eraser.png", view);
+
+    options.add(new JLabel("Brush width: "));
+    options.add(SharedOptions.weightSpinner);
+    options.add(SharedOptions.antialiasingButton);
   }
   public void dragStarted() {
     view.getSelectedDocumentView().snapShotManager.save();
@@ -392,8 +530,14 @@ public class EraserAction extends ToolAction {
     super.initVars();
     if (!selectedLayer.isVisible()) return;
     Graphics2D g = selectedLayer.getGraphics();
+
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+      SharedOptions.antialiasingButton.isSelected() ?
+      RenderingHints.VALUE_ANTIALIAS_ON :
+      RenderingHints.VALUE_ANTIALIAS_OFF);
+
     g.setClip(docView.getSelection());
-    g.setStroke(new BasicStroke(20, BasicStroke.CAP_ROUND, 0));
+    g.setStroke(new BasicStroke(((Double)SharedOptions.weightSpinner.getValue()).floatValue(), BasicStroke.CAP_ROUND, 0));
     Composite before = g.getComposite();
     g.setComposite(AlphaComposite.Clear);
     g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
@@ -406,6 +550,8 @@ public class EraserAction extends ToolAction {
 public class FillAction extends ToolAction {
   FillAction(View view){
     super("Paint Bucket Tool", "fill.png", view);
+
+    options.add(SharedOptions.antialiasingButton);
   }
   public void dragStarted() {
     view.getSelectedDocumentView().snapShotManager.save();
@@ -416,6 +562,10 @@ public class FillAction extends ToolAction {
     if (!docView.getSelection().contains(current)) return;
 
     Graphics2D g = selectedLayer.getGraphics();
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+      SharedOptions.antialiasingButton.isSelected() ?
+      RenderingHints.VALUE_ANTIALIAS_ON :
+      RenderingHints.VALUE_ANTIALIAS_OFF);
     g.setClip(null);
     g.setPaint(getSelectedColor());
     g.fill(docView.getSelection());

@@ -42,8 +42,8 @@ class ColorSelector extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        //used for the color of the arrows; consistent with the flat laf foreground color
-        final Color foreground = new Color(0xADADAD);
+        //used for the color of the arrows
+        final Color foreground = new Color(0x171717);
         
         Graphics2D g2 = (Graphics2D) g;
         

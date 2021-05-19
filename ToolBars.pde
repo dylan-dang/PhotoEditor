@@ -57,16 +57,20 @@ public class ToolBar extends StyledJToolBar {
     }
     setSelectedTool(selectedToolIndex);
   }
+
   public void setSelectedTool(int index) {
     selectedToolIndex = index;
     group.setSelected(buttonModelList.get(index), true);
   }
+
   public ToolAction getSelectedTool() {
     return toolActions[getSelectedIndex()];
   }
+
   public int getSelectedIndex() {
     return buttonModelList.indexOf(group.getSelection());
   }
+
   public ColorSelector getColorSelector() {
     return selector;
   }
@@ -75,6 +79,8 @@ public class ToolBar extends StyledJToolBar {
 public class ToolOptions extends StyledJToolBar implements ActionListener {
   JComboBox toolsCombo;
   ToolBar toolBar;
+  ArrayList<JComponent> options;
+
   ToolOptions(ToolBar toolBar) {
     this.toolBar = toolBar;
     setPreferredSize(new Dimension(32, 32));
@@ -92,10 +98,13 @@ public class ToolOptions extends StyledJToolBar implements ActionListener {
     toolsCombo.setOpaque(false);
     toolsCombo.setFocusable(false);
     toolsCombo.addActionListener(this);
+
     add(toolsCombo);
     add(Box.createRigidArea(new Dimension(5, 5)));
     add(new JSeparator(JSeparator.VERTICAL));
+    add(Box.createRigidArea(new Dimension(5, 5)));
   }
+
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() instanceof JComboBox) {
@@ -104,6 +113,12 @@ public class ToolOptions extends StyledJToolBar implements ActionListener {
       toolsCombo.setSelectedIndex(toolBar.getSelectedIndex());
     }
 
+    if (options != null) for(JComponent option: options) remove(option);
+    options = toolBar.getSelectedTool().getOptions();
+    for(JComponent option : options) add(option);
+
+    revalidate();
+    repaint();
   }
 }
 
