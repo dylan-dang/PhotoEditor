@@ -83,7 +83,7 @@ public class ToolOptions extends StyledJToolBar implements ActionListener {
 
   ToolOptions(ToolBar toolBar) {
     this.toolBar = toolBar;
-    setPreferredSize(new Dimension(32, 32));
+    setMaximumSize(new Dimension(32, 32));
 
     toolsCombo = new JComboBox();
     for(Component c: toolBar.getComponents()) {
@@ -103,11 +103,13 @@ public class ToolOptions extends StyledJToolBar implements ActionListener {
     add(Box.createRigidArea(new Dimension(5, 5)));
     add(new JSeparator(JSeparator.VERTICAL));
     add(Box.createRigidArea(new Dimension(5, 5)));
+
+    actionPerformed(null);
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof JComboBox) {
+    if (e != null && e.getSource() instanceof JComboBox) {
       toolBar.setSelectedTool(toolsCombo.getSelectedIndex());
     } else {
       toolsCombo.setSelectedIndex(toolBar.getSelectedIndex());
