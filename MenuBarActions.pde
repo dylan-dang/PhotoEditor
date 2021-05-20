@@ -666,17 +666,18 @@ public class ResizeAction extends MenuBarAction {
     labels.add(new JLabel("Resampling:", SwingConstants.RIGHT));
     labels.add(new JLabel("Width:", SwingConstants.RIGHT));
     labels.add(new JLabel("Height:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Percentage:", SwingConstants.RIGHT));
 
     JPanel inputs = new JPanel(new GridLayout(0, 1, 2, 2));
-    JComboBox resampling = new JComboBox(new Item[] {
+    JComboBox resampling;
+    JSpinner width, height, percentage;
+    inputs.add(resampling = new JComboBox(new Item[] {
       new Item("Bicubic", RenderingHints.VALUE_INTERPOLATION_BICUBIC),
       new Item("Bilinear", RenderingHints.VALUE_INTERPOLATION_BILINEAR),
-      new Item("Nearest Neighbor", RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
-    });
-    JSpinner width, height;
-    inputs.add(resampling);
+      new Item("Nearest Neighbor", RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)}));
     inputs.add(width = new JSpinner(new SpinnerNumberModel(doc.getWidth(), 1, Short.MAX_VALUE, 1)));
     inputs.add(height = new JSpinner(new SpinnerNumberModel(doc.getHeight(), 1, Short.MAX_VALUE, 1)));
+    inputs.add(percentage = new JSpinner(new SpinnerNumberModel(100d, 1d, (double) Short.MAX_VALUE, 1d)));
 
     JPanel panel = new JPanel(new BorderLayout(5, 5));
     panel.add(labels, BorderLayout.WEST);
@@ -686,7 +687,10 @@ public class ResizeAction extends MenuBarAction {
     if(confirmation == JOptionPane.CANCEL_OPTION) return;
 
     createSnapshot();
-    doc.resize((int)width.getValue(), (int)height.getValue(), ((Item)resampling.getSelectedItem()).getValue());
+    doc.resize(
+      (int)constrain(Math.round((Double)percentage.getValue()/100d * (int)width.getValue()), 1, Short.MAX_VALUE),
+      (int)constrain(Math.round((Double)percentage.getValue()/100d * (int)height.getValue()), 1, Short.MAX_VALUE), 
+      ((Item)resampling.getSelectedItem()).getValue());
     updateDocView();
 
   }
@@ -699,7 +703,40 @@ public class CanvasSizeAction extends MenuBarAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    
+    Document doc = view.getSelectedDocument();
+
+    JPanel labels = new JPanel(new GridLayout(0, 1, 2, 2));
+    labels.add(new JLabel("Width:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Height:", SwingConstants.RIGHT));
+    labels.add(new JLabel("Anchor:", SwingConstants.RIGHT));
+
+    JPanel inputs = new JPanel(new GridLayout(0, 1, 2, 2));
+    JSpinner width, height;
+    JComboBox anchor = new JComboBox(new String[] {
+      "Top Left",
+      "Top Center",
+      "Top Right",
+      "Center Left",
+      "Center Center",
+      "Center Right",
+      "Bottom Left",
+      "Bottom Center",
+      "Bottom Right"
+    });
+    inputs.add(width = new JSpinner(new SpinnerNumberModel(doc.getWidth(), 1, Short.MAX_VALUE, 1)));
+    inputs.add(height = new JSpinner(new SpinnerNumberModel(doc.getHeight(), 1, Short.MAX_VALUE, 1)));
+    inputs.add(anchor);
+
+    JPanel panel = new JPanel(new BorderLayout(5, 5));
+    panel.add(labels, BorderLayout.WEST);
+    panel.add(inputs, BorderLayout.CENTER);
+
+    int confirmation = JOptionPane.showConfirmDialog(view.getFrame(), panel, "Resize", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    if(confirmation == JOptionPane.CANCEL_OPTION) return;
+
+    createSnapshot();
+    doc.changeCanvasSize((int)width.getValue(), (int)height.getValue(), (String)anchor.getSelectedItem());
+    updateDocView();
   }
 }
 

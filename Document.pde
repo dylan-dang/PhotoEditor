@@ -153,6 +153,29 @@ public class Document {
       g.drawImage(original, 0, 0, width, height, null);
     }
   }
+
+  public void changeCanvasSize(int width, int height, String anchor) {
+    int x = 0, y = 0;
+    if(anchor.startsWith("Top")) y = 0;
+    else if(anchor.startsWith("Center")) y = (height - this.height) / 2;
+    else if(anchor.startsWith("Bottom")) y = height - this.height;
+
+    if(anchor.endsWith("Left")) x = 0;
+    else if(anchor.endsWith("Center")) x = (width - this.width) / 2;
+    else if(anchor.endsWith("Right")) x = width - this.width;
+
+    this.width = width;
+    this.height = height;
+    
+    for(Layer layer: layers) {
+      BufferedImage original = layer.getImage();
+      layer.setImage(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
+
+      Graphics2D g = layer.getGraphics();
+
+      g.drawImage(original, x, y, null);
+    }
+  }
 }
 
 public class SnapShot {
