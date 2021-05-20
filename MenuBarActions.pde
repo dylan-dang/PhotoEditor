@@ -415,7 +415,6 @@ public class FillSelectionAction extends MenuBarAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     DocumentView docView = view.getSelectedDocumentView();
-    Rectangle selected = docView.getSelection().getBounds();
     Graphics2D g = docView.getSelectedLayer().getGraphics();
 
     createSnapshot();

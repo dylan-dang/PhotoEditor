@@ -110,7 +110,6 @@ public class DocumentView extends JPanel {
     zoomIn.setIcon(infoBarIcon("zoomIn.png"));
 
     zoomSpinner = new JSpinner(new SpinnerNumberModel(100d, 0.1d, 6400d, 1d));
-    Dimension zoomSpinnerSize = new Dimension(45, INFOBAR_HEIGHT);
     JSpinner.NumberEditor editor = new JSpinner.NumberEditor(zoomSpinner, "##0.##");
     zoomSpinner.setFocusable(false);
     zoomSpinner.setMaximumSize(editor.getTextField().getPreferredSize());

@@ -51,7 +51,7 @@ public class AddEmptyLayerAction extends LayerAction {
   public void actionPerformed(ActionEvent e) {
     if (!isEnabled()) return;
     createSnapshot();
-    Layer layer = doc.addEmptyLayer(++selectedIndex);
+    doc.addEmptyLayer(++selectedIndex);
     docView.setSelectedLayerIndex(selectedIndex);
     list.update();
   }
