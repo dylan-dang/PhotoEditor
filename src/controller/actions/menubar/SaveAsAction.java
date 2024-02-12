@@ -6,8 +6,8 @@ import model.Document;
 import view.View;
 import java.io.File;
 
-public class SaveAsAction extends MenuBarAction {
-    private Document document;
+public class SaveAsAction extends FileMenuBarAction {
+    private final Document document;
 
     public SaveAsAction(View view, Document document) {
         super(view, "Save As...", "ctrl shift S");
@@ -21,9 +21,8 @@ public class SaveAsAction extends MenuBarAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Document doc = document == null ? view.getSelectedDocument() : document;
-        File file = promptFile(false);
-        if (file == null)
-            return;
+        File file = saveFile();
+        if (file == null) return;
         doc.setLinkedFile(file);
         new SaveAction(view, doc).execute();
     }

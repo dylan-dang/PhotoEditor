@@ -6,7 +6,7 @@ import view.View;
 import model.Document;
 import java.io.File;
 
-public class OpenFileAction extends MenuBarAction {
+public class OpenFileAction extends FileMenuBarAction {
     public OpenFileAction(View view) {
         super(view, "Open...", "ctrl O");
         setEnabled(true);
@@ -14,9 +14,8 @@ public class OpenFileAction extends MenuBarAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        File file = promptFile(true);
-        if (file == null)
-            return;
+        File file = openFile();
+        if (file == null) return;
         int index = view.getImageTabs().getSelectedIndex() + 1;
         view.insertDocument(new Document(file), index);
         view.getImageTabs().setSelectedIndex(index);
