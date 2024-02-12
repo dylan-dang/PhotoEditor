@@ -24,8 +24,6 @@ public class EraserAction extends ToolAction {
 
     public void dragging() {
         super.initVars();
-        if (!selectedLayer.isVisible())
-            return;
         Graphics2D g = selectedLayer.getGraphics();
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -34,7 +32,7 @@ public class EraserAction extends ToolAction {
 
         g.setClip(docView.getSelection());
         g.setStroke(new BasicStroke(((Double) weightSpinner.getValue()).floatValue(),
-                BasicStroke.CAP_ROUND, 0));
+                BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
         Composite before = g.getComposite();
         g.setComposite(AlphaComposite.Clear);
         g.draw(new Line2D.Double(last.getX(), last.getY(), current.getX(), current.getY()));
