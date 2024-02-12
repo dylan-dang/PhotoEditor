@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.event.KeyEvent;
 import javax.swing.*;
-import javax.swing.event.*;
 
 import controller.actions.tool.*;
 import controller.actions.menubar.*;
@@ -14,16 +13,14 @@ import controller.filters.*;
 import model.Document;
 
 public class View extends JPanel {
-    public final Color CONTENT_BACKGROUND = new Color(0xbfbfbf); // i could probably put this
-                                                                 // constant in a different static
-                                                                 // class
+    public final Color CONTENT_BACKGROUND = new Color(0x282828);
     private boolean drawPixelGrid = false;
-    public Set<Integer> pressedKeys = new HashSet<Integer>();
+    public Set<Integer> pressedKeys = new HashSet<>();
 
-    private JFrame frame;
+    private final JFrame frame;
     private JMenuBar menuBar;
     private ToolOptions toolOptions;
-    private ToolAction[] toolActions = {
+    private final ToolAction[] toolActions = {
             // new MoveAction(this),
             new SelectAction(this), new LassoAction(this), new PolygonalLassoTool(this),
             new CropAction(this), new EyeDropAction(this), new BrushAction(this),
@@ -38,27 +35,18 @@ public class View extends JPanel {
     public View(final JFrame frame) {
         // injects itself int to the frame, when it's safe to do so
         this.frame = frame;
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                frame.setContentPane(initView());
-                frame.revalidate();
-            }
+        SwingUtilities.invokeLater(() -> {
+            frame.setContentPane(initView());
+            frame.revalidate();
         });
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .addKeyEventDispatcher(new KeyEventDispatcher() {
-                    @Override
-                    public boolean dispatchKeyEvent(KeyEvent keyEvent) {
-                        switch (keyEvent.getID()) {
-                            case KeyEvent.KEY_PRESSED:
-                                pressedKeys.add(keyEvent.getKeyCode());
-                                break;
-                            case KeyEvent.KEY_RELEASED:
-                                pressedKeys.remove(keyEvent.getKeyCode());
-                                break;
-                        }
-                        return false;
+                .addKeyEventDispatcher(keyEvent -> {
+                    switch (keyEvent.getID()) {
+                        case KeyEvent.KEY_PRESSED -> pressedKeys.add(keyEvent.getKeyCode());
+                        case KeyEvent.KEY_RELEASED -> pressedKeys.remove(keyEvent.getKeyCode());
                     }
+                    return false;
                 });
     }
 
@@ -100,7 +88,7 @@ public class View extends JPanel {
                     if (getAction() == null)
                         return super.isEnabled();
                     boolean enabled = getAction().isEnabled();
-                    if (enabled == false)
+                    if (!enabled)
                         setArmed(false);
                     getModel().setEnabled(enabled);
                     return enabled;
@@ -172,12 +160,10 @@ public class View extends JPanel {
         imageTabs.setFocusable(false);
         imageTabs.setMinimumSize(new Dimension(0, 0));
         imageTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        imageTabs.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                splitPane.setBackground(imageTabs.getTabCount() == 0 ? CONTENT_BACKGROUND
-                        : frame.getContentPane().getBackground());
-                layerListView.update();
-            }
+        imageTabs.addChangeListener(e -> {
+            splitPane.setBackground(imageTabs.getTabCount() == 0 ? CONTENT_BACKGROUND
+                    : frame.getContentPane().getBackground());
+            layerListView.update();
         });
         splitPane.setLeftComponent(imageTabs);
     }
@@ -201,11 +187,10 @@ public class View extends JPanel {
         return docView.getDocument();
     }
 
-    public DocumentView insertDocument(Document doc, int index) {
+    public void insertDocument(Document doc, int index) {
         DocumentView docView = new DocumentView(doc, this);
         docView.setCanvasBackground(CONTENT_BACKGROUND);
         imageTabs.insertTab(doc.getName() + (doc.isSaved() ? "" : "*"), null, docView, null, index);
-        return docView;
     }
 
     public void updateTabNames() {
@@ -213,10 +198,6 @@ public class View extends JPanel {
             Document doc = ((DocumentView) imageTabs.getComponentAt(tab)).getDocument();
             imageTabs.setTitleAt(tab, doc.getName() + (doc.isSaved() ? "" : "*"));
         }
-    }
-
-    public DocumentView addDocument(Document doc) {
-        return insertDocument(doc, imageTabs.getTabCount());
     }
 
     public JFrame getFrame() {

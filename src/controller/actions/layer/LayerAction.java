@@ -30,7 +30,7 @@ public abstract class LayerAction extends MenuBarAction {
         super(null, null);
         this.list = layerListView;
         putValue(Action.SMALL_ICON,
-                new ImageIcon(String.format("resources/layers/actions/%s", layerActionIconName)));
+                new ImageIcon(String.format("assets/layers/actions/%s", layerActionIconName)));
     }
 
     protected void initVars() {

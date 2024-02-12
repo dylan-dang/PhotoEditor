@@ -4,9 +4,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.*;
+import java.util.Arrays;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 import model.Document;
 import model.SnapShotManager;
@@ -21,23 +21,33 @@ public class DocumentView extends JPanel {
             66.67f, 100, 150, 200, 300, 400, 500, 600, 800, 1000, 1200, 1400, 1600, 2000, 2400,
             3200, 4000, 4800, 5600, 6400};
     private final int INFOBAR_HEIGHT = 24;
-    private Thread selectionAnimator;
+    private final Timer selectionAnimator = new Timer(25, new ActionListener() {
+        private int cycle = 0;
+        public void actionPerformed(ActionEvent evt) {
+            canvas.selectionBlackDash = new BasicStroke(1, BasicStroke.CAP_BUTT,
+                    BasicStroke.JOIN_BEVEL, 0, new float[] {3}, 5 - cycle);
+            canvas.selectionWhiteDash = new BasicStroke(1, BasicStroke.CAP_BUTT,
+                    BasicStroke.JOIN_BEVEL, 0, new float[] {3}, 5 - ((cycle + 3) % 6));
+            Rectangle bounds = getScaledSelection().getBounds();
+            bounds.grow(1, 1); // confirm entire selection is repainted
+            canvas.repaint(bounds);
+            cycle = (cycle + 1) % 6;
+        }
+    });
     private float scale = 1;
 
-    private View view;
-    private Document document;
+    private final View view;
+    private final Document document;
     private int selectedLayerIndex;
     private Shape selection;
 
     private JPanel infoBar;
-    private JLabel toolTipLabel;
-    private JLabel imageSizeLabel;
-    private JLabel positionLabel;
+    private final JLabel toolTipLabel;
+    private final JLabel imageSizeLabel;
+    private final JLabel positionLabel;
     private JButton fitToWindow, zoomOut, zoomIn;
     private JSpinner zoomSpinner;
     private JSlider zoomSlider;
-
-    private JScrollPane scrollPane;
     private JViewport viewport;
     private JPanel canvasWrapper;
     private Canvas canvas;
@@ -72,7 +82,7 @@ public class DocumentView extends JPanel {
     }
 
     private ImageIcon infoBarIcon(String string) {
-        return new ImageIcon(String.format("resources/infoBar/%s", string));
+        return new ImageIcon(String.format("assets/infoBar/%s", string));
     }
 
     private void setupInfoBar() {
@@ -129,7 +139,11 @@ public class DocumentView extends JPanel {
         fitToWindow.setIcon(infoBarIcon("fitToWindow.png"));
         zoomOut.setIcon(infoBarIcon("zoomOut.png"));
         zoomIn.setIcon(infoBarIcon("zoomIn.png"));
+        setupZoomSpinner();
+        setupZoomSlider();
+    }
 
+    private void setupZoomSpinner() {
         zoomSpinner = new JSpinner(new SpinnerNumberModel(100d, 0.1d, 6400d, 1d));
         JSpinner.NumberEditor editor = new JSpinner.NumberEditor(zoomSpinner, "##0.##");
         zoomSpinner.setFocusable(false);
@@ -137,31 +151,24 @@ public class DocumentView extends JPanel {
         zoomSpinner.setEditor(editor);
         zoomSpinner.setBorder(null);
         zoomSpinner.setBackground(null);
-        zoomSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                float value = ((Number) zoomSpinner.getValue()).floatValue();
-                setScale(value / 100);
-            }
+        zoomSpinner.addChangeListener(e -> {
+            float value = ((Number) zoomSpinner.getValue()).floatValue();
+            setScale(value / 100);
         });
+    }
 
-        int i;
-        for (i = 0; i < ZOOM_TABLE.length; i++) {
-            if (ZOOM_TABLE[i] == 100)
-                break;
-        }
-        zoomSlider = new JSlider(JSlider.HORIZONTAL, 0, ZOOM_TABLE.length - 1, i);
+    private void setupZoomSlider() {
+        int defaultIndex = Arrays.binarySearch(ZOOM_TABLE, 100);
+        zoomSlider = new JSlider(JSlider.HORIZONTAL, 0, ZOOM_TABLE.length - 1, defaultIndex);
         Dimension sliderSize = new Dimension(110, INFOBAR_HEIGHT);
         zoomSlider.setPreferredSize(sliderSize);
         zoomSlider.setMinimumSize(sliderSize);
         zoomSlider.setMaximumSize(sliderSize);
         zoomSlider.setSnapToTicks(true);
-        zoomSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                JSlider source = (JSlider) e.getSource();
-                if (source.getValueIsAdjusting())
-                    setScale(ZOOM_TABLE[source.getValue()] / 100);
-            }
+        zoomSlider.addChangeListener(e -> {
+            JSlider source = (JSlider) e.getSource();
+            if (source.getValueIsAdjusting())
+                setScale(ZOOM_TABLE[source.getValue()] / 100);
         });
     }
 
@@ -178,18 +185,14 @@ public class DocumentView extends JPanel {
         canvasWrapper.addMouseWheelListener(canvasMouseListener);
         canvasWrapper.addMouseListener(canvasMouseListener);
 
-        scrollPane = new JScrollPane();
+        JScrollPane scrollPane = new JScrollPane();
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         add(scrollPane, BorderLayout.CENTER);
 
         viewport = scrollPane.getViewport();
         viewport.add(canvasWrapper);
-        viewport.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                viewport.repaint();
-            }
-        });
+        viewport.addChangeListener(e -> viewport.repaint());
     }
 
     public class Canvas extends JPanel {
@@ -215,34 +218,9 @@ public class DocumentView extends JPanel {
             g2.drawImage(document.flattened(), 0, 0, null);
             g2.setTransform(preScale);
 
-            if (view.isPixelGridEnabled() && (viewRect.height + viewRect.width) / scale < 50) { // have
-                                                                                                // to
-                                                                                                // limit
-                                                                                                // at
-                                                                                                // 50
-                                                                                                // lines
-                                                                                                // idk
-                                                                                                // how
-                                                                                                // to
-                                                                                                // make
-                                                                                                // it
-                                                                                                // faster
-                int startingRow = (int) (viewRect.y / scale);
-                for (int row = startingRow + 1; row < startingRow + viewRect.height / scale
-                        + 1; row++) {
-                    int y = (int) (scale * row);
-                    drawDoubleDashed(g2,
-                            new Line2D.Float(viewRect.x, y, viewRect.x + viewRect.width, y));
-                }
-                int startingCol = (int) (viewRect.x / scale);
-                for (int col = startingCol + 1; col < startingCol + viewRect.width / scale
-                        + 1; col++) {
-                    int x = (int) (scale * col);
-                    drawDoubleDashed(g2,
-                            new Line2D.Float(x, viewRect.y, x, viewRect.y + viewRect.height));
-                }
+            if (view.isPixelGridEnabled() && (viewRect.height + viewRect.width) / scale < 50) {
+                drawPixelGrid(g2, viewRect);
             }
-
             // hacky way of showing selection on bottom and right edges consistently
             g2.setColor(view.CONTENT_BACKGROUND);
             Dimension size = getPreferredSize();
@@ -253,6 +231,23 @@ public class DocumentView extends JPanel {
                 drawDoubleDashed(g2, getScaledSelection(), selectionWhiteDash, selectionBlackDash);
             }
             g2.dispose();
+        }
+
+        private void drawPixelGrid(Graphics2D g2, Rectangle viewRect) {
+            int startingRow = (int) (viewRect.y / scale);
+            for (int row = startingRow + 1; row < startingRow + viewRect.height / scale
+                    + 1; row++) {
+                int y = (int) (scale * row);
+                drawDoubleDashed(g2,
+                        new Line2D.Float(viewRect.x, y, viewRect.x + viewRect.width, y));
+            }
+            int startingCol = (int) (viewRect.x / scale);
+            for (int col = startingCol + 1; col < startingCol + viewRect.width / scale
+                    + 1; col++) {
+                int x = (int) (scale * col);
+                drawDoubleDashed(g2,
+                        new Line2D.Float(x, viewRect.y, x, viewRect.y + viewRect.height));
+            }
         }
 
         private void drawDoubleDashed(Graphics2D g2, Shape shape, Stroke white, Stroke black) {
@@ -376,33 +371,6 @@ public class DocumentView extends JPanel {
         }
     }
 
-    private class SelectionAnimator extends Thread {
-        DocumentView docView;
-
-        SelectionAnimator(DocumentView docView) {
-            this.docView = docView;
-        }
-
-        public void run() {
-            int cycle = 0;
-            while (docView.hasSelection()) {
-                Canvas canvas = docView.getCanvas();
-                canvas.selectionBlackDash = new BasicStroke(1, BasicStroke.CAP_BUTT,
-                        BasicStroke.JOIN_BEVEL, 0, new float[] {3}, 5 - cycle);
-                canvas.selectionWhiteDash = new BasicStroke(1, BasicStroke.CAP_BUTT,
-                        BasicStroke.JOIN_BEVEL, 0, new float[] {3}, 5 - ((cycle + 3) % 6));
-                Rectangle bounds = docView.getScaledSelection().getBounds();
-                bounds.grow(1, 1); // confirm entire selection is repainted
-                canvas.repaint(bounds);
-                cycle = (cycle + 1) % 6;
-                try {
-                    Thread.sleep(100);
-                } catch (Exception e) {
-                }
-            }
-        }
-    }
-
     public Shape getSelection() {
         if (selection == null)
             return new Rectangle2D.Double(0, 0, document.getWidth(), document.getHeight());
@@ -421,18 +389,15 @@ public class DocumentView extends JPanel {
     public void setSelection(Shape selection) {
         this.selection = selection;
         canvas.repaint();
-        if (selectionAnimator == null || !selectionAnimator.isAlive() && hasSelection()) {
-            selectionAnimator = new SelectionAnimator(this);
+        if (hasSelection()) {
             selectionAnimator.start();
+        } else {
+            selectionAnimator.stop();
         }
     }
 
     public boolean hasSelection() {
         return selection != null;
-    }
-
-    public void removeSelection() {
-        this.selection = null;
     }
 
     public void setCanvasBackground(Color c) {

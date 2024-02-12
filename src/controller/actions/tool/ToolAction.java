@@ -17,7 +17,7 @@ import view.ToolOptions;
 
 public abstract class ToolAction extends AbstractAction {
     protected String name;
-    protected ArrayList<JComponent> options = new ArrayList<JComponent>();
+    protected ArrayList<JComponent> options = new ArrayList<>();
     protected DragGesture dragState = new DragGesture();
     protected Point2D start, last, current;
     protected DocumentView docView;
@@ -36,7 +36,7 @@ public abstract class ToolAction extends AbstractAction {
         this.toolOptions = view.getToolOptions();
         toolTip = name;
         putValue(Action.SMALL_ICON,
-                new ImageIcon(String.format("resources/tools/%s", toolIconName)));
+                new ImageIcon(String.format("assets/tools/%s", toolIconName)));
     }
 
     public String getName() {
@@ -85,6 +85,7 @@ public abstract class ToolAction extends AbstractAction {
 
     public void dragEnded() {}
 
+    @SuppressWarnings("unused")
     public void click(Point2D pos, int button) {}
 
     protected void updateDocument() {

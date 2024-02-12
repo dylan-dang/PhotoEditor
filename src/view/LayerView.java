@@ -14,8 +14,8 @@ public class LayerView extends JToggleButton implements ActionListener, ItemList
     LayerListView parent;
     Layer layer;
     JLabel layerLabel = new JLabel();
-    private final ImageIcon VISIBLE = new ImageIcon("resources/layers/visible.png");
-    private final ImageIcon INVISIBLE = new ImageIcon("resources/layers/invisible.png");
+    private final ImageIcon VISIBLE = new ImageIcon("assets/layers/visible.png");
+    private final ImageIcon INVISIBLE = new ImageIcon("assets/layers/invisible.png");
     JToggleButton visibilityButton;
     private final int MAXLENGTH = 38;
 

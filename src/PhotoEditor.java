@@ -1,9 +1,11 @@
 import javax.swing.JFrame;
 import view.View;
+import com.formdev.flatlaf.FlatDarkLaf;
 
 public class PhotoEditor extends JFrame {
     public PhotoEditor() {
         super();
+        FlatDarkLaf.setup();
         setTitle("Photo Editor");
         setSize(800, 600);
         new View(this);
@@ -11,7 +13,7 @@ public class PhotoEditor extends JFrame {
         setVisible(true);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new PhotoEditor();
     }
 }

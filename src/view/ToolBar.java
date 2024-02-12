@@ -7,15 +7,16 @@ import controller.actions.tool.ToolAction;
 
 
 public class ToolBar extends StyledJToolBar {
-    private ArrayList<ButtonModel> buttonModelList = new ArrayList<ButtonModel>();
-    private ColorSelector selector = new ColorSelector();
-    private ButtonGroup group = new ButtonGroup();
+    private final ArrayList<ButtonModel> buttonModelList = new ArrayList<>();
+    private final ColorSelector selector = new ColorSelector();
+    private final ButtonGroup group = new ButtonGroup();
     private int selectedToolIndex = 0;
-    private ToolAction[] toolActions;
+    private final ToolAction[] toolActions;
 
     ToolBar(ToolAction[] toolActions) {
         super();
         this.toolActions = toolActions;
+        this.setFloatable(true); // restore floatable
         setOrientation(JToolBar.VERTICAL);
 
         addRigidSpace(8);
