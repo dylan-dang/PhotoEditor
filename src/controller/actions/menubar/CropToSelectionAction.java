@@ -32,6 +32,7 @@ public class CropToSelectionAction extends MenuBarAction {
             g.setComposite(AlphaComposite.Clear);
             g.fill(clearArea);
             g.setComposite(before);
+            g.dispose();
         }
 
         doc.crop(bounds);
